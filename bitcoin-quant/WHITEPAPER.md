@@ -351,9 +351,9 @@ def mine_block(miner_xmss_key, block_template, difficulty):
 ```
 Block Reward Schedule:
   Genesis ──────── 50 QNT/block ────────┐
-  2.1M blocks ──── 25 QNT/block ────────┤ Halving 1
-  4.2M blocks ──── 12.5 QNT/block ──────┤ Halving 2
-  6.3M blocks ──── 6.25 QNT/block ──────┤ Halving 3
+  210k blocks ─── 25 QNT/block ────────┤ Halving 1
+  420k blocks ─── 12.5 QNT/block ──────┤ Halving 2
+  630k blocks ─── 6.25 QNT/block ──────┤ Halving 3
   ...continues until 21M total supply──┘
 
 Total Supply: 21,000,000 QNT (capped)
@@ -653,7 +653,7 @@ QNT proves that mineable post-quantum cryptocurrency is possible. Even if QNT fa
 QNT's existence signals to the broader crypto industry that quantum threat is real and action is needed now.
 
 **3. Open Source Contribution**
-All QNT code is MIT-licensed. Anyone can fork, learn from, or build upon it. The knowledge persists regardless of QNT's fate.
+All QNT code is BSL-1.1 licensed (converts to GPL-2.0 on June 15, 2030). Anyone can fork, learn from, or build upon it. The knowledge persists regardless of QNT's fate.
 
 **4. The Attempt Matters**
 Someone has to try. If no one builds the first mineable PQC cryptocurrency, the idea dies by default. QNT is the attempt.
