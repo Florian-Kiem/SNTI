@@ -1,0 +1,54 @@
+# Compiled binaries
+*.o
+*.a
+*.so
+*.out
+a.out
+config.log
+config.status
+config.cache
+libtool
+autom4te.cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+*.la
+*.lo
+*.obj
+*.exe
+*.dll
+*.dylib
+
+# Specific compiled files in project
+bitcoin-quant/a.out
+bitcoin-quant/config.log
+bitcoin-quant/config.status
+bitcoin-quant/configure~
+bitcoin-quant/libtool
+bitcoin-quant/autom4te.cache/
+bitcoin-quant/__pycache__/
+bitcoin-quant/quick_test
+bitcoin-quant/test_bridge
+bitcoin-quant/test_dtor
+bitcoin-quant/test_dtor2
+bitcoin-quant/test_final
+bitcoin-quant/test_minimal
+bitcoin-quant/test_sha256
+bitcoin-quant/test_xmss
+bitcoin-quant/test_xmss_core
+bitcoin-quant/test_xmss_tx
+bitcoin-quant/test_dtor3.cpp.gch
+bitcoin-quant/qnt_genesis_key
+bitcoin-quant/qnt_genesis_mine
+bitcoin-quant/qnt_miner
+bitcoin-quant/mine_testnet_genesis
+bitcoin-quant/*.o
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
