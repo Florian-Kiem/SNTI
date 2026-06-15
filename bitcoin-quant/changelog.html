@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QNT Development Changelog</title>
+<style>
+:root{--bg:#0a0e17;--card:#111827;--border:#2a3a55;--text:#e8edf5;--dim:#8899bb;--accent:#00d4aa;--blue:#3b82f6;--purple:#a855f7;--orange:#f59e0b;--green:#22c55e;--red:#ef4444;--yellow:#eab308}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'SF Mono','Fira Code',monospace;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1100px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.logo{font-size:22px;font-weight:800;color:var(--accent)}
+.logo small{font-size:10px;color:var(--dim);display:block;letter-spacing:2px}
+.back-link{font-size:13px;color:var(--dim)}
+.back-link:hover{color:var(--accent)}
+
+/* Phase cards */
+.phase{margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.phase-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none}
+.phase-header:hover{background:rgba(255,255,255,.02)}
+.phase-title{display:flex;align-items:center;gap:12px}
+.phase-num{font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:1px}
+.phase-num.done{background:rgba(34,197,94,.15);color:var(--green)}
+.phase-num.wip{background:rgba(245,158,11,.15);color:var(--orange)}
+.phase-num.pending{background:rgba(136,153,187,.15);color:var(--dim)}
+.phase-name{font-size:15px;font-weight:600}
+.phase-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:1px}
+.phase-badge.done{background:rgba(34,197,94,.15);color:var(--green)}
+.phase-badge.wip{background:rgba(245,158,11,.15);color:var(--orange)}
+.phase-badge.pending{background:rgba(136,153,187,.15);color:var(--dim)}
+.phase-toggle{font-size:18px;color:var(--dim);transition:transform .2s}
+.phase-toggle.open{transform:rotate(180deg)}
+
+.phase-body{display:none;padding:0 20px 20px}
+.phase-body.open{display:block}
+
+/* Checklist table */
+table{width:100%;border-collapse:collapse;margin-top:4px}
+th{text-align:left;padding:8px 12px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(42,58,85,.5);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.02)}
+.chk{font-size:16px;width:30px;text-align:center}
+.chk.done{color:var(--green)}
+.chk.pending{color:var(--dim)}
+.chk.wip{color:var(--orange)}
+.item-name{color:var(--text)}
+.item-detail{font-size:11px;color:var(--dim);margin-top:2px;line-height:1.5}
+.item-files{font-size:10px;color:var(--blue);margin-top:2px}
+.item-commit{font-size:10px;color:var(--purple);margin-top:2px;font-family:monospace}
+
+/* Progress bar */
+.progress-bar{height:4px;border-radius:4px;background:var(--border);margin:8px 0 16px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .5s}
+.progress-fill.done{background:var(--green)}
+.progress-fill.wip{background:var(--orange)}
+.progress-fill.pending{background:var(--dim)}
+
+/* Summary */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.summary-card .num{font-size:24px;font-weight:700}
+.summary-card .lbl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.summary-card.green .num{color:var(--green)}
+.summary-card.orange .num{color:var(--orange)}
+.summary-card.dim .num{color:var(--dim)}
+.summary-card.blue .num{color:var(--blue)}
+
+/* Known issues */
+.issues{margin-top:12px;padding:12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:8px}
+.issues .title{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.issues ul{list-style:none;padding:0}
+.issues li{font-size:12px;color:var(--text);padding:4px 0;padding-left:16px;position:relative}
+.issues li::before{content:"!";position:absolute;left:0;color:var(--yellow);font-weight:700}
+
+/* Commit log */
+.commit-log{margin-top:16px}
+.commit-log .title{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.commit-item{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid rgba(42,58,85,.3)}
+.commit-hash{font-size:11px;color:var(--purple);font-family:monospace;white-space:nowrap;padding-top:1px}
+.commit-msg{font-size:12px;color:var(--text);line-height:1.5}
+.commit-date{font-size:10px;color:var(--dim);white-space:nowrap;margin-left:auto;padding-top:1px}
+
+.refresh{font-size:11px;color:var(--dim);text-align:center;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">QNT <small>DEVELOPMENT CHANGELOG</small></div>
+    <a href="/dashboard.html" class="back-link">← Back to Dashboard</a>
+  </header>
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="summary-card green"><div class="num" id="cntDone">—</div><div class="lbl">Completed</div></div>
+    <div class="summary-card orange"><div class="num" id="cntWip">—</div><div class="lbl">In Progress</div></div>
+    <div class="summary-card dim"><div class="num" id="cntPending">—</div><div class="lbl">Pending</div></div>
+    <div class="summary-card blue"><div class="num" id="cntTotal">—</div><div class="lbl">Total Items</div></div>
+  </div>
+
+  <!-- Phase 1 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p1')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 1</span>
+        <span class="phase-name">XMSS Transaction Integration</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp1">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p1">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">1.1 — CXMSSSigner class<div class="item-detail">XMSS key management: Generate, Sign, HaveKey, GetLeafIndex, GetXMSSKeys</div><div class="item-files">wallet/xmss_signer.h, wallet/xmss_signer.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">1.2 — Wallet Signing Integration<div class="item-detail">SignXMSS(), HaveXMSSKey(), GetXMSSPubKey() di SigningProvider. CreateXMSSSig() di sign.cpp</div><div class="item-files">script/signingprovider.h, script/sign.h, script/sign.cpp, wallet/wallet.h, wallet/wallet.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">1.3 — Transaction Verification<div class="item-detail">CheckXMSSSignature() di BaseSignatureChecker. SignTransactionXMSS() di wallet.cpp</div><div class="item-files">script/script.h, script/script.cpp, wallet/wallet.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">1.4 — Makefile.am Updated<div class="item-detail">xmss_signer.cpp/h, xmss_address.cpp, xmss_keystore.cpp, rpc/xmss.cpp ditambahkan ke build</div><div class="item-files">src/Makefile.am</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">1.5 — Integration Tests<div class="item-detail">6/6 tests passed: keygen, sign/verify, wrong key, stateful signing, sig size</div><div class="item-files">test_xmss_core.c</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p2')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 2</span>
+        <span class="phase-name">Genesis Block Mine</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp2">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p2">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">2.1 — Genesis XMSS Key Generated<div class="item-detail">XMSS-SHA2_10_256 key pair. Private key disimpan di qnt_genesis_key.txt</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">2.2 — Genesis Block Mined<div class="item-detail">Hash: 5322eeb6160377b16f97e65fd0f67e06db246fe8072e8429215ad16644a6a7bb</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">2.3 — Regtest Running<div class="item-detail">10+ blocks mined. Address prefix: qnr. Port: 29333</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p3')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 3</span>
+        <span class="phase-name">Wallet XMSS Integration</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp3">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p3">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Sub-phase</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">3a — Address Encoding<div class="item-detail">Base58Check(0x60 || RIPEMD160(SHA256(xmss_pubkey64))). Mainnet prefix 'q'</div><div class="item-files">wallet/xmss_address.h, wallet/xmss_address.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">3b — Keystore Persistence<div class="item-detail">CXMSSKeyStore: import, export, sign, serialization</div><div class="item-files">wallet/xmss_keystore.h, wallet/xmss_keystore.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">3c — RPC Commands<div class="item-detail">getnewxmssaddress, listxmsskeys, getxmssaddressinfo, sendtoxmssaddress</div><div class="item-files">wallet/rpc/xmss.h, wallet/rpc/xmss.cpp</div><div class="item-commit">commit: fe3d605</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">3d — PoUW Mining Integration<div class="item-detail">XMSS key per block, pubkey di coinbase OP_RETURN, signature di scriptSig, re-verify PoW setelah sig insertion</div><div class="item-files">consensus/params.h, kernel/chainparams.cpp, validation.cpp, rpc/mining.cpp</div><div class="item-commit">commit: b666498</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">3e — XMSS State Management Integration<div class="item-detail">SaveState/LoadState/HasExhaustedKeys di CXMSSSigner. WriteXmssState/ReadXmssState di WalletBatch. State di-load saat wallet open, di-save setelah commit transaction. Anti-reuse protection untuk XMSS stateful signatures.</div><div class="item-files">wallet/xmss_state.h, wallet/xmss_signer.h, wallet/xmss_signer.cpp, wallet/wallet.cpp, wallet/walletdb.h, wallet/walletdb.cpp</div><div class="item-commit">commit: e672298</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p4')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 4</span>
+        <span class="phase-name">Security Audit</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp4">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p4">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">4.1 — Self-Audit Checklist<div class="item-detail">Review key generation, state persistence, signing flow, script engine, wallet keystore, transaction validation</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">4.2 — Fix LOW issues<div class="item-detail">Key exhausted check di Sign(), minimum sig length di interpreter</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">4.3 — Audit Report<div class="item-detail">AUDIT.md written. 2 MEDIUM + 3 LOW findings. No CRITICAL/HIGH. Overall PASS.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p5')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 5</span>
+        <span class="phase-name">Documentation</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp5">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p5">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">5.1 — README.md<div class="item-detail">Project overview, build guide, quick start, architecture diagram</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">5.2 — Developer Docs<div class="item-detail">RPC API reference, XMSS wallet guide, mining guide, testnet guide</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 6 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6')">
+      <div class="phase-title">
+        <span class="phase-num pending">PHASE 6</span>
+        <span class="phase-name">Community & Visibility</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge pending">⬜ NOT STARTED</span>
+        <span class="phase-toggle" id="tp6">▼</span>
+      </div>
+    </div>
+    <div class="phase-body" id="p6">
+      <div class="progress-bar"><div class="progress-fill pending" style="width:0%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk pending">⬜</td><td class="item-name">6.1 — Public Testnet Launch<div class="item-detail">Bitcointalk ANN, Reddit, Twitter/X, Discord, Telegram</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.1b — Stratum Mining Server<div class="item-detail">Multi-miner stratum proxy (stratum_server.py). Port 3333 (stratum), port 3334 (HTTP stats). Share tracking (accepted/rejected). Connects to bitcoind regtest RPC. Auto block generation on share threshold. Multiple simultaneous miner connections supported.</div><div class="item-files">stratum_server.py</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.1c — XMSS Wallet: Send from XMSS Address<div class="item-detail">sendfromxmssaddress RPC: send QNT from XMSS address to any destination (legacy or XMSS). Supports fee subtraction and wallet comments. Register XMSS RPC methods in CRPCTable. Fixed fee estimation with -fallbackfee flag.</div><div class="item-files">wallet/rpc/xmss.cpp, wallet/rpc/xmss.h, wallet/rpc/wallet.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.1d — P2XMSS Script Type (Native XMSS Output)<div class="item-detail">Native P2XMSS script output: OP_XMSS_CHECKSIG with 64-byte pubkey. Added XMSSHash to CTxDestination variant. Updated Solver(), ExtractDestination(), GetScriptForDestination(), IsMine(). Wallet generates P2XMSS outputs for XMSS addresses. Tested: P2XMSS→Legacy, P2XMSS→P2XMSS ✅</div><div class="item-files">addresstype.h, addresstype.cpp, script/solver.h, script/solver.cpp, key_io.cpp, wallet/rpc/xmss.cpp, wallet/scriptpubkeyman.cpp, wallet/xmss_signer.cpp</div></td></tr>
+          <tr><td class="chk in_progress">🔄</td><td class="item-name">6.1e — Multi-Node Test (2 nodes, block propagation)<div class="item-detail">Setup 2 nodes on same VPS (ports 29332/29333 and 29334/29335). Both nodes connected as peers. ISSUE: PoUW blocks cause 'mutated block' reject (bad-witness-nonce-size) because PoUW modifies coinbase after PoW. Both nodes need identical XMSS wallet state to validate. Known limitation — requires bypassing witness malleation check for regtest multi-node. Nodes connect and share headers but block bodies rejected.</div><div class="item-files">kernel/chainparams.cpp, bitcoin.conf</div></td></tr>
+          <tr><td class="chk in_progress">🔄</td><td class="item-name">6.1f — DNS Seed / Hardcoded Seeds (Peer Discovery)<div class="item-detail">Added hardcoded seed nodes for mainnet (port 9333), testnet (port 19333), regtest (port 29333). Seed: 104.234.26.7 (primary QNT node). BIP155 serialized format. DNS seed names reserved: seed.qnt.io, testnet-seed.qnt.io. Build in progress.</div><div class="item-files">qnt_seeds.h, kernel/chainparams.cpp</div></td></tr>
+          <tr><td class="chk pending">⬜</td><td class="item-name">6.2 — Team Page<div class="item-detail">Founder, core contributors, advisors</div></td></tr>
+          <tr><td class="chk pending">⬜</td><td class="item-name">6.3 — Exchange Listing Prep<div class="item-detail">Target: Gate.io, MEXC, Bitget (Phase 1)</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 7 -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p7')">
+      <div class="phase-title">
+        <span class="phase-num pending">PHASE 7</span>
+        <span class="phase-name">Mainnet Launch</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge pending">⬜ NOT STARTED</span>
+        <span class="phase-toggle" id="tp7">▼</span>
+      </div>
+    </div>
+    <div class="phase-body" id="p7">
+      <div class="progress-bar"><div class="progress-fill pending" style="width:0%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk pending">⬜</td><td class="item-name">7.1 — Final Security Review<div class="item-detail">All audit findings fixed, re-audit if needed</div></td></tr>
+          <tr><td class="chk pending">⬜</td><td class="item-name">7.2 — Seed Nodes Deployed<div class="item-detail">Minimum 3 seed nodes on different regions</div></td></tr>
+          <tr><td class="chk pending">⬜</td><td class="item-name">7.3 — Genesis Block Final<div class="item-detail">Real genesis timestamp, real XMSS key, difficulty calibrated</div></td></tr>
+          <tr><td class="chk pending">⬜</td><td class="item-name">7.4 — Public Launch<div class="item-detail">Mining opens, exchanges list, community activated</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Known Issues -->
+  <div class="phase" style="border-color:rgba(239,68,68,.3)">
+    <div class="phase-header" onclick="toggle('issues')">
+      <div class="phase-title">
+        <span class="phase-num" style="background:rgba(239,68,68,.15);color:var(--red)">!</span>
+        <span class="phase-name">Known Issues & Technical Debt</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge" style="background:rgba(245,158,11,.15);color:var(--orange)">2 OPEN</span>
+        <span class="phase-toggle" id="tissues">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="issues">
+      <div class="issues">
+        <div class="title">⚠️ Open Issues</div>
+        <ul>
+          <li><strong>XMSS key state persistence</strong> — <span style="color:var(--green)">RESOLVED (Phase 3e)</span> SaveState/LoadState integrated.</li>
+          <li><strong>Key exhausted check</strong> — <span style="color:var(--green)">RESOLVED (Phase 4)</span> Explicit check added in Sign().</li>
+          <li><strong>Minimum sig length</strong> — <span style="color:var(--green)">RESOLVED (Phase 4)</span> Check added in interpreter.</li>
+          <li><strong>Segfault post-main()</strong> — Workaround pakai _exit(0). Root cause belum di-investigasi.</li>
+          <li><strong>XMSS sig size in block</strong> — ~2.5KB signature di coinbase scriptSig. Perlu evaluasi impact ke block propagation.</li>
+          <li><strong>Encryption at rest</strong> — XMSS state di wallet DB belum di-encrypt. MEDIUM priority untuk mainnet.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Commits -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('commits')">
+      <div class="phase-title">
+        <span class="phase-num" style="background:rgba(168,85,247,.15);color:var(--purple)">LOG</span>
+        <span class="phase-name">Recent Commits</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-toggle" id="tcommits">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="commits">
+      <div class="commit-log">
+        <div class="title">Git History</div>
+        <div id="commitList">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="refresh" id="refreshTime">Last updated: —</div>
+</div>
+
+<script>
+function toggle(id) {
+  const body = document.getElementById(id);
+  const toggle = document.getElementById('t' + id);
+  if (body.classList.contains('open')) {
+    body.classList.remove('open');
+    toggle.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    toggle.classList.add('open');
+  }
+}
+
+// Count items
+function countItems() {
+  const done = document.querySelectorAll('.chk.done').length;
+  const wip = document.querySelectorAll('.chk.wip').length;
+  const pending = document.querySelectorAll('.chk.pending').length;
+  document.getElementById('cntDone').textContent = done;
+  document.getElementById('cntWip').textContent = wip;
+  document.getElementById('cntPending').textContent = pending;
+  document.getElementById('cntTotal').textContent = done + wip + pending;
+}
+
+// Load commits from API
+async function loadCommits() {
+  try {
+    const r = await fetch('/api/commits?count=10');
+    const d = await r.json();
+    if (d.error || !d.commits || !d.commits.length) {
+      document.getElementById('commitList').innerHTML = '<div style="color:var(--dim);font-size:12px">No commits found or API unavailable</div>';
+      return;
+    }
+    document.getElementById('commitList').innerHTML = d.commits.map(c => {
+      const hash = c.hash ? c.hash.substring(0,8) : '???????';
+      const msg = c.message || c.subject || '(no message)';
+      const date = c.date || '';
+      return '<div class="commit-item">'
+        + '<span class="commit-hash">' + hash + '</span>'
+        + '<span class="commit-msg">' + msg + '</span>'
+        + '<span class="commit-date">' + date + '</span>'
+        + '</div>';
+    }).join('');
+  } catch(e) {
+    document.getElementById('commitList').innerHTML = '<div style="color:var(--dim);font-size:12px">Error loading commits: ' + e.message + '</div>';
+  }
+}
+
+countItems();
+loadCommits();
+document.getElementById('refreshTime').textContent = 'Last updated: ' + new Date().toLocaleString();
+</script>
+</body>
+</html>

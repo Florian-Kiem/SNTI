@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QNT Block Explorer</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --text-dim: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --code: #161b22;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+
+  /* Header */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .container { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .logo { font-size: 1.3em; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .logo span { color: var(--accent2); }
+  .search-box {
+    flex: 1;
+    display: flex;
+    min-width: 200px;
+    max-width: 600px;
+  }
+  .search-box input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px 0 0 6px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box button {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0 6px 6px 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .search-box button:hover { opacity: 0.85; }
+  .nav-links { display: flex; gap: 12px; align-items: center; }
+  .nav-links a { color: var(--text-dim); font-size: 14px; }
+  .nav-links a:hover { color: var(--accent); text-decoration: none; }
+  .nav-links a.active { color: var(--accent); font-weight: 600; }
+  .nav-sep { width: 1px; height: 18px; background: var(--border); }
+
+  /* Whitepaper */
+  .wp-page { max-width: 860px; margin: 0 auto; }
+  .wp-hero {
+    text-align: center; padding: 48px 24px 32px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 24px;
+  }
+  .wp-hero h1 { font-size: 2em; margin-bottom: 8px; color: var(--accent); }
+  .wp-hero .wp-sub { color: var(--text-dim); font-size: 15px; margin-bottom: 16px; }
+  .wp-hero .wp-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .wp-hero .wp-badge {
+    padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    background: rgba(88,166,255,0.1); color: var(--accent); border: 1px solid rgba(88,166,255,0.25);
+  }
+  .wp-section {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 32px; margin-bottom: 20px;
+  }
+  .wp-section h2 {
+    font-size: 1.25em; margin-bottom: 14px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border); color: var(--accent);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .wp-section h2 .num {
+    background: var(--accent); color: #fff; width: 28px; height: 28px;
+    border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .wp-section h3 { font-size: 1.05em; margin: 18px 0 8px; color: var(--accent2); }
+  .wp-section p { margin-bottom: 10px; line-height: 1.7; color: var(--text); }
+  .wp-section ul, .wp-section ol { margin: 8px 0 12px 20px; line-height: 1.8; }
+  .wp-section li { margin-bottom: 4px; }
+  .wp-section code {
+    background: var(--code); padding: 2px 6px; border-radius: 4px;
+    font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace;
+    color: var(--accent4);
+  }
+  .wp-section pre {
+    background: var(--code); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 18px; overflow-x: auto;
+    font-size: 13px; line-height: 1.6; margin: 10px 0 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .wp-section table {
+    width: 100%; border-collapse: collapse; margin: 12px 0;
+    font-size: 14px;
+  }
+  .wp-section th { background: var(--bg3); padding: 8px 12px; text-align: left; font-size: 12px; color: var(--text-dim); text-transform: uppercase; border-bottom: 2px solid var(--border); }
+  .wp-section td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .wp-section tr:hover td { background: var(--bg3); }
+  .wp-highlight {
+    background: rgba(88,166,255,0.06); border-left: 3px solid var(--accent);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0;
+  }
+  .wp-highlight.green { background: rgba(63,185,80,0.06); border-left-color: var(--accent2); }
+  .wp-highlight.orange { background: rgba(247,129,102,0.06); border-left-color: var(--accent3); }
+  .wp-toc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .wp-toc a {
+    padding: 4px 12px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; font-size: 12px; color: var(--text-dim);
+  }
+  .wp-toc a:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+  .wp-footer { text-align: center; padding: 32px; color: var(--text-dim); font-size: 12px; border-top: 1px solid var(--border); margin-top: 24px; }
+
+  /* Stats bar */
+  .stats-bar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .stat-item { text-align: center; }
+  .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 16px; font-weight: 600; color: var(--accent); }
+
+  /* Main content */
+  main { padding: 24px 0; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-body { padding: 16px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 8px 12px; font-size: 12px; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+
+  /* Detail grid */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 8px 16px;
+  }
+  .detail-label { color: var(--text-dim); font-size: 13px; padding: 6px 0; }
+  .detail-value { font-size: 14px; word-break: break-all; padding: 6px 0; }
+
+  /* Truncated hash */
+  .hash { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+  .hash-short { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .badge-purple { background: rgba(210,168,255,0.15); color: var(--accent4); }
+
+  /* Loading / error */
+  .loading { text-align: center; padding: 40px; color: var(--text-dim); }
+  .error { background: rgba(247,129,102,0.1); border: 1px solid var(--accent3); color: var(--accent3); padding: 12px 16px; border-radius: 8px; margin: 16px 0; }
+
+  /* Pagination */
+  .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+  .pagination button {
+    padding: 6px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .pagination button:hover { background: var(--border); }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    header .container { flex-direction: column; }
+    .search-box { max-width: 100%; width: 100%; }
+  }
+
+  /* TX visualization */
+  .tx-flow { display: flex; flex-direction: column; gap: 12px; }
+  .tx-io-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .tx-io-label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .tx-io-value { font-family: 'SF Mono', monospace; font-size: 13px; }
+  .tx-amount { color: var(--accent2); font-weight: 600; }
+  .tx-amount-sent { color: var(--accent3); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <a href="#" class="logo" onclick="showPage('home')">QNT<span>Explorer</span></a>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search by block hash/height, txid, or address..." onkeydown="if(event.key==='Enter')doSearch()">
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div class="nav-links">
+      <a href="#" onclick="showPage('home');return false;">Home</a>
+      <a href="#" onclick="showPage('blocks');return false;">Blocks</a>
+      <span class="nav-sep"></span>
+      <a href="#" onclick="showPage('whitepaper');return false;">Whitepaper</a>
+    </div>
+  </div>
+</header>
+
+<div class="stats-bar" id="statsBar">
+  <div class="container">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-item"><div class="stat-label">Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+<main>
+<div class="container">
+
+  <!-- ==================== HOME PAGE ==================== -->
+  <div class="page active" id="page-home">
+    <div class="card">
+      <div class="card-header">Latest Blocks</div>
+      <div class="card-body">
+        <table>
+          <thead><tr><th>Height</th><th>Hash</th><th>Time</th><th>Txs</th><th>Size</th></tr></thead>
+          <tbody id="blocksTable"><tr><td colspan="5" class="loading">Loading blocks...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BLOCKS LIST PAGE ==================== -->
+  <div class="page" id="page-blocks">
+    <div class="card">
+      <div class="card-header">All Blocks</div>
+      <div class="card-body">
+        <table>
+          <thead><tr><th>Height</th><th>Hash</th><th>Time</th><th>Txs</th><th>Difficulty</th><th>Size</th></tr></thead>
+          <tbody id="allBlocksTable"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== BLOCK DETAIL PAGE ==================== -->
+  <div class="page" id="page-block">
+    <div id="blockContent"></div>
+  </div>
+
+  <!-- ==================== TRANSACTION DETAIL PAGE ==================== -->
+  <div class="page" id="page-tx">
+    <div id="txContent"></div>
+  </div>
+
+  <!-- ==================== ADDRESS DETAIL PAGE ==================== -->
+  <div class="page" id="page-address">
+    <div id="addressContent"></div>
+  </div>
+
+  <!-- ==================== NOT FOUND ==================== -->
+  <div class="page" id="page-notfound">
+    <div class="error" style="margin-top:40px;text-align:center;">
+      <h2>Not Found</h2>
+      <p>The requested resource could not be found.</p>
+    </div>
+  </div>
+
+  <!-- ==================== WHITEPAPER PAGE ==================== -->
+  <div class="page" id="page-whitepaper">
+    <div class="wp-page">
+
+      <div class="wp-hero">
+        <h1>QNT Whitepaper</h1>
+        <div class="wp-sub">Quantum Resistant Network Token — The First Mineable Post-Quantum Blockchain</div>
+        <div class="wp-badges">
+          <span class="wp-badge">XMSS-SHA2_10_256</span>
+          <span class="wp-badge">SHA-256 PoW</span>
+          <span class="wp-badge">NIST SP 800-208</span>
+          <span class="wp-badge">Quantum Resistant</span>
+        </div>
+        <div class="wp-toc">
+          <a href="#wp-abstract">Abstract</a>
+          <a href="#wp-problem">Problem</a>
+          <a href="#wp-solution">Solution</a>
+          <a href="#wp-architecture">Architecture</a>
+          <a href="#wp-xmss">XMSS</a>
+          <a href="#wp-security">Security</a>
+          <a href="#wp-tokenomics">Tokenomics</a>
+          <a href="#wp-roadmap">Roadmap</a>
+          <a href="#wp-references">References</a>
+        </div>
+      </div>
+
+      <div class="wp-section" id="wp-abstract">
+        <h2><span class="num">1</span> Abstract</h2>
+        <p><strong>QNT (Quantum Resistant Network Token)</strong> is the world's first mineable blockchain secured by post-quantum cryptography. Built on a fork of Bitcoin Core v27, QNT replaces ECDSA with <strong>XMSS (Extended Merkle Signature Scheme)</strong> — a hash-based signature scheme standardized in NIST SP 800-208 that is resistant to attacks from both classical and quantum computers.</p>
+        <p>Unlike existing "quantum-resistant" projects that are either non-mineable, use unproven cryptographic assumptions, or are centralized, QNT delivers a fully decentralized, proof-of-work blockchain with mathematically proven quantum resistance — while maintaining the battle-tested architecture of Bitcoin.</p>
+        <div class="wp-highlight green">
+          <strong>Key Innovation:</strong> QNT is the first blockchain to combine XMSS post-quantum signatures with SHA-256 proof-of-work mining, creating a truly quantum-resistant decentralized network that anyone can mine.
+        </div>
+      </div>
+
+      <div class="wp-section" id="wp-problem">
+        <h2><span class="num">2</span> The Quantum Threat</h2>
+        <h3>2.1 — Shor's Algorithm</h3>
+        <p>In 1994, Peter Shor published a quantum algorithm that can efficiently solve the discrete logarithm problem and integer factorization — the mathematical foundations of ECDSA, RSA, and all widely-used digital signatures. A sufficiently powerful quantum computer running Shor's algorithm can derive private keys from public keys in polynomial time.</p>
+        <h3>2.2 — Current Blockchain Vulnerability</h3>
+        <p>Bitcoin, Ethereum, and virtually all existing blockchains rely on ECDSA (Elliptic Curve Digital Signature Algorithm). When a quantum computer with ~1,500+ logical qubits becomes available, ECDSA-256 will be broken. Current estimates suggest this could happen within 10-20 years.</p>
+        <h3>2.3 — "Harvest Now, Decrypt Later"</h3>
+        <p>Adversaries are already harvesting public keys from blockchain transactions today, planning to decrypt them when quantum computers become available. This means funds in exposed addresses are already at risk — even before quantum computers exist.</p>
+        <div class="wp-highlight orange">
+          <strong>Urgency:</strong> ~25% of all Bitcoin (~$300B+) is in addresses with exposed public keys vulnerable to quantum attack. The transition to post-quantum cryptography cannot wait.
+        </div>
+      </div>
+
+      <div class="wp-section" id="wp-solution">
+        <h2><span class="num">3</span> Our Solution</h2>
+        <p>QNT addresses the quantum threat with a two-pronged approach:</p>
+        <ol>
+          <li><strong>XMSS Signatures (Primary):</strong> Hash-based signatures with mathematical proofs of quantum resistance. No known quantum algorithm provides any significant speedup against hash-based cryptography.</li>
+          <li><strong>ECDSA (Supplementary):</strong> Maintained for backward compatibility during the transition period. Users can choose their security level.</li>
+        </ol>
+        <h3>3.1 — Why XMSS?</h3>
+        <ul>
+          <li><strong>NIST Standardized:</strong> SP 800-208 (2020) — approved for government use</li>
+          <li><strong>Minimal Assumptions:</strong> Security relies only on hash function properties</li>
+          <li><strong>Proven Security:</strong> 15+ years of cryptanalysis with no significant weaknesses found</li>
+          <li><strong>No Quantum Speedup:</strong> Grover's algorithm provides at most √N speedup — easily mitigated by increasing hash output size</li>
+        </ul>
+        <h3>3.2 — Hybrid Architecture</h3>
+        <p>QNT uses a hybrid approach where both ECDSA and XMSS transactions coexist on the same chain. The script engine distinguishes signature types by key size:</p>
+        <table>
+          <tr><th>Key Size</th><th>Signature Scheme</th><th>Opcode</th><th>Quantum Resistant</th></tr>
+          <tr><td>33 bytes</td><td>ECDSA (secp256k1)</td><td>OP_CHECKSIG (0xAC)</td><td>No</td></tr>
+          <tr><td>64 bytes</td><td>XMSS-SHA2_10_256</td><td>OP_XMSS_CHECKSIG (0xBB)</td><td>Yes</td></tr>
+        </table>
+      </div>
+
+      <div class="wp-section" id="wp-architecture">
+        <h2><span class="num">4</span> Technical Architecture</h2>
+        <h3>4.1 — Base Layer: Bitcoin Core v27</h3>
+        <p>QNT is built on Bitcoin Core v27 — the most battle-tested blockchain codebase in existence. This provides:</p>
+        <ul>
+          <li>Proven UTXO model and transaction validation</li>
+          <li>Mature P2P networking stack</li>
+          <li>Robust mempool and block propagation</li>
+          <li>Extensive RPC API and tooling</li>
+          <li>Active security maintenance and updates</li>
+        </ul>
+        <h3>4.2 — Consensus Parameters</h3>
+        <table>
+          <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+          <tr><td>Block Time</td><td>60 seconds</td><td>Faster than Bitcoin (10 min)</td></tr>
+          <tr><td>Max Supply</td><td>21,000,000 QNT</td><td>Same as Bitcoin</td></tr>
+          <tr><td>Halving Interval</td><td>210,000 blocks (~146 days)</td><td>Same schedule as Bitcoin</td></tr>
+          <tr><td>Initial Block Reward</td><td>50 QNT</td><td></td></tr>
+          <tr><td>Signature Scheme</td><td>XMSS-SHA2_10_256</td><td>Primary</td></tr>
+          <tr><td>Hash Algorithm</td><td>SHA-256</td><td>PoW + XMSS internal</td></tr>
+          <tr><td>Address Prefix</td><td>qnr (regtest), qnt (mainnet)</td><td></td></tr>
+        </table>
+        <h3>4.3 — Script Extensions</h3>
+        <p>QNT extends Bitcoin Script with a new opcode:</p>
+        <pre>OP_XMSS_CHECKSIG = 0xBB</pre>
+        <p>This opcode verifies a 64-byte XMSS public key against a ~2500-byte XMSS signature. The verification follows the XMSS specification in RFC 8391 / NIST SP 800-208.</p>
+      </div>
+
+      <div class="wp-section" id="wp-xmss">
+        <h2><span class="num">5</span> XMSS Deep Dive</h2>
+        <h3>5.1 — How XMSS Works</h3>
+        <p>XMSS (Extended Merkle Signature Scheme) is a stateful hash-based signature scheme built on four cryptographic primitives:</p>
+        <ol>
+          <li><strong>WOTS+ (Winternitz One-Time Signature):</strong> Signs individual message chunks</li>
+          <li><strong>Merkle Tree:</strong> Aggregates 2^h WOTS+ public keys into a single root (the XMSS public key)</li>
+          <li><strong>BDS Algorithm:</strong> Efficiently updates the Merkle tree after each signature</li>
+          <li><strong>Leaf Index:</strong> Tracks which WOTS+ key is used next (stateful)</li>
+        </ol>
+        <h3>5.2 — QNT XMSS Parameters</h3>
+        <table>
+          <tr><th>Parameter</th><th>Value</th><th>Meaning</th></tr>
+          <tr><td>h (tree height)</td><td>10</td><td>2^10 = 1024 signatures per key</td></tr>
+          <tr><td>n (hash output)</td><td>32 bytes (256 bits)</td><td>Security level</td></tr>
+          <tr><td>w (Winternitz)</td><td>16</td><td>WOTS+ parameter</td></tr>
+          <tr><td>Signature size</td><td>~2,500 bytes</td><td>Including auth path</td></tr>
+          <tr><td>Public key</td><td>64 bytes</td><td>Root + SEED</td></tr>
+          <tr><td>Private key</td><td>~1,300 bytes</td><td>Multiple WOTS+ seeds</td></tr>
+        </table>
+        <h3>5.3 — Stateful Key Management</h3>
+        <p>XMSS is a <strong>stateful</strong> signature scheme — each signature consumes one leaf of the Merkle tree, and the leaf index must be tracked and persisted. QNT handles this through:</p>
+        <ul>
+          <li>Automatic leaf index tracking in the wallet keystore</li>
+          <li>Atomic state updates after each signature</li>
+          <li>Encrypted state persistence on disk</li>
+          <li>Recovery mechanisms for state synchronization</li>
+        </ul>
+        <div class="wp-highlight orange">
+          <strong>Critical:</strong> Reusing an XMSS leaf index completely compromises security. QNT's wallet implementation prevents this through strict state management.
+        </div>
+      </div>
+
+      <div class="wp-section" id="wp-security">
+        <h2><span class="num">6</span> Security Analysis</h2>
+        <h3>6.1 — Quantum Resistance Proof</h3>
+        <p>XMSS security against quantum adversaries:</p>
+        <ul>
+          <li><strong>Shor's Algorithm:</strong> Does not apply to hash-based signatures. No known quantum algorithm breaks preimage resistance of cryptographic hash functions.</li>
+          <li><strong>Grover's Algorithm:</strong> Provides at most √N speedup for preimage search. With SHA-256 (n=256), quantum preimage resistance is 2^128 — still computationally infeasible.</li>
+          <li><strong>Collision Resistance:</strong> Quantum birthday attacks reduce collision resistance from 2^128 to 2^85. Still far beyond practical reach.</li>
+        </ul>
+        <h3>6.2 — Known Limitations (Honest Disclosure)</h3>
+        <ul>
+          <li><strong>Stateful:</strong> Key state must be carefully managed. Lost state = potential key reuse.</li>
+          <li><strong>Limited Signatures:</strong> Each key can only sign 2^10 = 1,024 messages. New keys must be generated after exhaustion.</li>
+          <li><strong>Larger Signatures:</strong> ~2,500 bytes vs ~72 bytes for ECDSA. Increases transaction size and block space usage.</li>
+          <li><strong>Not Post-Quantum PoW:</strong> SHA-256 PoW is quantum-resistant enough (Grover's gives only 2x speedup), but mining is not "post-quantum" in the same sense as signatures.</li>
+        </ul>
+        <h3>6.3 — Comparison with Alternatives</h3>
+        <table>
+          <tr><th>Scheme</th><th>Quantum Resistant</th><th>Signature Size</th><th>Stateful</th><th>NIST Status</th></tr>
+          <tr><td>ECDSA (Bitcoin)</td><td>No</td><td>72 B</td><td>No</td><td>FIPS 186-4</td></tr>
+          <tr><td>Schnorr (Taproot)</td><td>No</td><td>64 B</td><td>No</td><td>-</td></tr>
+          <tr><td><strong>XMSS (QNT)</strong></td><td><strong>Yes</strong></td><td><strong>~2,500 B</strong></td><td><strong>Yes</strong></td><td><strong>SP 800-208</td></tr>
+          <tr><td>CRYSTALS-Dilithium</td><td>Yes</td><td>2,420 B</td><td>No</td><td>FIPS 204</td></tr>
+          <tr><td>SPHINCS+</td><td>Yes</td><td>7,856 B</td><td>No</td><td>FIPS 205</td></tr>
+          <tr><td>FALCON</td><td>Yes</td><td>666 B</td><td>No</td><td>FIPS 206</td></tr>
+        </table>
+      </div>
+
+      <div class="wp-section" id="wp-tokenomics">
+        <h2><span class="num">7</span> Token Economics</h2>
+        <h3>7.1 — Supply Schedule</h3>
+        <table>
+          <tr><th>Era</th><th>Block Range</th><th>Reward</th><th>Total New</th><th>Cumulative</th></tr>
+          <tr><td>1</td><td>0 — 209,999</td><td>50.00 QNT</td><td>10,500,000</td><td>10,500,000</td></tr>
+          <tr><td>2</td><td>210,000 — 419,999</td><td>25.00 QNT</td><td>5,250,000</td><td>15,750,000</td></tr>
+          <tr><td>3</td><td>420,000 — 629,999</td><td>12.50 QNT</td><td>2,625,000</td><td>18,375,000</td></tr>
+          <tr><td>4</td><td>630,000 — 839,999</td><td>6.25 QNT</td><td>1,312,500</td><td>19,687,500</td></tr>
+          <tr><td>5</td><td>840,000 — 1,049,999</td><td>3.125 QNT</td><td>656,250</td><td>20,343,750</td></tr>
+          <tr><td>...</td><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+          <tr><td>Total</td><td>—</td><td>—</td><td><strong>21,000,000 QNT</strong></td><td>—</td></tr>
+        </table>
+        <h3>7.2 — Fee Market</h3>
+        <p>Transaction fees follow Bitcoin's model: users bid for block space. As block rewards decrease over time, fees become the primary miner incentive. The 60-second block time provides faster confirmation while maintaining reasonable orphan rates.</p>
+        <h3>7.3 — Mining</h3>
+        <ul>
+          <li><strong>Algorithm:</strong> SHA-256 (same as Bitcoin)</li>
+          <li><strong>Hardware:</strong> ASIC miners (SHA-256 compatible)</li>
+          <li><strong>Block Signing:</strong> Miners sign found blocks with XMSS (proving quantum-resistant block production)</li>
+          <li><strong>Pools:</strong> Compatible with existing Stratum protocol mining pools</li>
+        </ul>
+      </div>
+
+      <div class="wp-section" id="wp-roadmap">
+        <h2><span class="num">8</span> Roadmap</h2>
+        <table>
+          <tr><th>Phase</th><th>Milestone</th><th>Status</th></tr>
+          <tr><td>Phase 1</td><td>XMSS Transaction Integration</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 2</td><td>Genesis Block Mining</td><td>✅ Complete</td></tr>
+          <tr><td>Phase 3</td><td>Public Testnet Launch</td><td>⏳ In Progress</td></tr>
+          <tr><td>Phase 4</td><td>Security Audit</td><td>⏳ Pending</td></tr>
+          <tr><td>Phase 5</td><td>Documentation & Legal Entity</td><td>⏳ Pending</td></tr>
+          <tr><td>Phase 6</td><td>Community Building & Testnet Growth</td><td>⏳ Pending</td></tr>
+          <tr><td>Phase 7</td><td>Mainnet Launch</td><td>⏳ Pending</td></tr>
+        </table>
+        <h3>Future Research</h3>
+        <ul>
+          <li><strong>PoUW v2:</strong> Proof of Useful Work — integrating LLM inference as an alternative to hash-based mining</li>
+          <li><strong>XMSS^MT:</strong> Multi-tree XMSS for unlimited signatures per key</li>
+          <li><strong>SPHINCS+ Support:</strong> Stateless hash-based signatures as an alternative option</li>
+          <li><strong>Lightning Network:</strong> Layer-2 payment channels with XMSS-signed channels</li>
+        </ul>
+      </div>
+
+      <div class="wp-section" id="wp-references">
+        <h2><span class="num">9</span> References</h2>
+        <ol>
+          <li>NIST SP 800-208 — "Recommendation for Stateful Hash-Based Signature Schemes" (2020)</li>
+          <li>RFC 8391 — "XMSS: Extended Merkle Signature Scheme" (2018)</li>
+          <li>Shor, P. — "Algorithms for Quantum Computation" (1994)</li>
+          <li>Grover, L. — "A Fast Quantum Mechanical Algorithm for Database Search" (1996)</li>
+          <li>Bitcoin Core v27 — <a href="https://github.com/bitcoin/bitcoin" target="_blank">github.com/bitcoin/bitcoin</a></li>
+          <li>NIST PQC Standardization — <a href="https://csrc.nist.gov/projects/post-quantum-cryptography" target="_blank">csrc.nist.gov/projects/post-quantum-cryptography</a></li>
+          <li>Bernstein, D.J. & Lange, T. — "Post-Quantum Cryptography" (2017)</li>
+        </ol>
+      </div>
+
+      <div class="wp-footer">
+        <p>QNT — Quantum Resistant Network Token</p>
+        <p>The First Mineable Post-Quantum Blockchain</p>
+        <p style="margin-top:8px;">Built on Bitcoin Core v27 • XMSS-SHA2_10_256 • SHA-256 PoW</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+const API = '/api';
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + name);
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function tsToDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts * 1000).toLocaleString();
+}
+
+function fmtDifficulty(d) {
+  if (d === undefined || d === null) return '—';
+  if (d >= 1e12) return (d / 1e12).toFixed(2) + ' T';
+  if (d >= 1e9) return (d / 1e9).toFixed(2) + ' G';
+  if (d >= 1e6) return (d / 1e6).toFixed(2) + ' M';
+  return d.toFixed(4);
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + ' MB';
+  if (bytes >= 1024) return (bytes / 1024).toFixed(2) + ' KB';
+  return bytes + ' B';
+}
+
+function shortHash(h) {
+  if (!h) return '—';
+  if (h.length <= 16) return h;
+  return h.slice(0, 8) + '…' + h.slice(-8);
+}
+
+function escHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function linkHash(h, label) {
+  label = label || shortHash(h);
+  return `<a href="#" onclick="showBlock('${h}');return false;" class="hash">${escHtml(label)}</a>`;
+}
+
+function linkTxid(t, label) {
+  label = label || shortHash(t);
+  return `<a href="#" onclick="showTx('${t}');return false;" class="hash">${escHtml(label)}</a>`;
+}
+
+function linkAddress(a) {
+  return `<a href="#" onclick="showAddress('${a}');return false;" class="hash">${escHtml(a)}</a>`;
+}
+
+// ==================== SEARCH ====================
+function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+
+  // Block height (all digits)
+  if (/^\d+$/.test(q)) {
+    showBlock(q);
+    return;
+  }
+
+  // Block hash (64 hex chars)
+  if (/^[0-9a-fA-F]{64}$/.test(q)) {
+    // Could be block or tx — try block first
+    fetch(`${API}/block/${q}`).then(r => {
+      if (r.ok) { showBlock(q); return; }
+      // Try as tx
+      fetch(`${API}/tx/${q}`).then(r2 => {
+        if (r2.ok) { showTx(q); return; }
+        showPage('notfound');
+      });
+    });
+    return;
+  }
+
+  // Address (starts with specific prefix)
+  if (/^[13mn2][a-km-zA-HJ-NP-Z1-9]{25,62}$/.test(q) || /^bc[a-z0-9]{39,59}$/.test(q)) {
+    showAddress(q);
+    return;
+  }
+
+  // Fallback: try as address
+  showAddress(q);
+}
+
+// ==================== STATUS ====================
+async function loadStatus() {
+  try {
+    const r = await fetch(`${API}/status`);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('statsGrid').innerHTML = `<div class="stat-item"><div class="stat-label">Error</div><div class="stat-value" style="color:var(--accent3);font-size:12px;">${escHtml(d.error)}</div></div>`;
+      return;
+    }
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-item"><div class="stat-label">Chain</div><div class="stat-value">${escHtml(d.chain||'—')}</div></div>
+      <div class="stat-item"><div class="stat-label">Block Height</div><div class="stat-value">${escHtml(String(d.blocks??'—'))}</div></div>
+      <div class="stat-item"><div class="stat-label">Difficulty</div><div class="stat-value">${fmtDifficulty(d.difficulty)}</div></div>
+      <div class="stat-item"><div class="stat-label">Connections</div><div class="stat-value">${escHtml(String(d.connections??'—'))}</div></div>
+      <div class="stat-item"><div class="stat-label">Mempool</div><div class="stat-value">${escHtml(String(d.mempool_txs??0))} txs</div></div>
+      <div class="stat-item"><div class="stat-label">Version</div><div class="stat-value">${escHtml(String(d.version??'—'))}</div></div>
+    `;
+  } catch(e) {
+    document.getElementById('statsGrid').innerHTML = `<div class="stat-item"><div class="stat-label">Error</div><div class="stat-value" style="color:var(--accent3);font-size:12px;">${escHtml(e.message)}</div></div>`;
+  }
+}
+
+// ==================== BLOCKS ====================
+async function loadBlocks() {
+  try {
+    const r = await fetch(`${API}/blocks/latest?count=20`);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('blocksTable').innerHTML = `<tr><td colspan="5" class="error">${escHtml(d.error)}</td></tr>`;
+      return;
+    }
+    const blocks = d.blocks || [];
+    if (blocks.length === 0) {
+      document.getElementById('blocksTable').innerHTML = `<tr><td colspan="5" class="loading">No blocks found. Is bitcoind running?</td></tr>`;
+      return;
+    }
+    document.getElementById('blocksTable').innerHTML = blocks.map(b => `
+      <tr>
+        <td><a href="#" onclick="showBlock(${b.height});return false;">${b.height}</a></td>
+        <td>${linkHash(b.hash)}</td>
+        <td>${tsToDate(b.time)}</td>
+        <td>${b.tx_count}</td>
+        <td>${fmtSize(b.size)}</td>
+      </tr>
+    `).join('');
+
+    // Also populate all blocks table
+    document.getElementById('allBlocksTable').innerHTML = blocks.map(b => `
+      <tr>
+        <td><a href="#" onclick="showBlock(${b.height});return false;">${b.height}</a></td>
+        <td>${linkHash(b.hash)}</td>
+        <td>${tsToDate(b.time)}</td>
+        <td>${b.tx_count}</td>
+        <td>${fmtDifficulty(b.difficulty)}</td>
+        <td>${fmtSize(b.size)}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    document.getElementById('blocksTable').innerHTML = `<tr><td colspan="5" class="error">${escHtml(e.message)}</td></tr>`;
+  }
+}
+
+async function showBlock(id) {
+  showPage('block');
+  document.getElementById('blockContent').innerHTML = '<div class="loading">Loading block...</div>';
+  try {
+    const r = await fetch(`${API}/block/${id}`);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('blockContent').innerHTML = `<div class="error">${escHtml(d.error)}</div>`;
+      return;
+    }
+
+    let txRows = '';
+    if (d.transactions && d.transactions.length > 0) {
+      txRows = d.transactions.map(tx => {
+        const outTotal = (tx.vout||[]).reduce((s,v) => s + (v.value||0), 0);
+        const addrs = (tx.vout||[]).map(v => (v.addresses||[]).join(', ') || '—').join('<br>');
+        return `<tr>
+          <td>${linkTxid(tx.txid)}</td>
+          <td style="font-size:12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;">${escHtml(addrs)}</td>
+          <td style="text-align:right;">${outTotal.toFixed(8)} QNT</td>
+          <td>${fmtSize(tx.size)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('blockContent').innerHTML = `
+      <div class="card">
+        <div class="card-header">Block #${escHtml(String(d.height))}</div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-label">Hash</div><div class="detail-value hash">${escHtml(d.hash)}</div>
+            <div class="detail-label">Height</div><div class="detail-value">${escHtml(String(d.height))}</div>
+            <div class="detail-label">Timestamp</div><div class="detail-value">${tsToDate(d.time)}</div>
+            <div class="detail-label">Confirmations</div><div class="detail-value">${escHtml(String(d.confirmations??'—'))}</div>
+            <div class="detail-label">Merkle Root</div><div class="detail-value hash">${escHtml(d.merkleroot)}</div>
+            <div class="detail-label">Nonce</div><div class="detail-value">${escHtml(String(d.nonce??'—'))}</div>
+            <div class="detail-label">Bits</div><div class="detail-value hash">${escHtml(d.bits||'—')}</div>
+            <div class="detail-label">Difficulty</div><div class="detail-value">${fmtDifficulty(d.difficulty)}</div>
+            <div class="detail-label">Size</div><div class="detail-value">${fmtSize(d.size)}</div>
+            <div class="detail-label">Stripped Size</div><div class="detail-value">${fmtSize(d.strippedsize)}</div>
+            <div class="detail-label">Weight</div><div class="detail-value">${escHtml(String(d.weight??'—'))} WU</div>
+            <div class="detail-label">Transactions</div><div class="detail-value">${escHtml(String(d.tx_count))}</div>
+            <div class="detail-label">Previous Block</div><div class="detail-value">${d.previousblockhash ? linkHash(d.previousblockhash) : '—'}</div>
+            <div class="detail-label">Next Block</div><div class="detail-value">${d.nextblockhash ? linkHash(d.nextblockhash) : '—'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Transactions (${escHtml(String(d.tx_count))})</div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>TXID</th><th>Outputs (addresses)</th><th>Total Out</th><th>Size</th></tr></thead>
+            <tbody>${txRows || '<tr><td colspan="4" class="loading">No transactions</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('blockContent').innerHTML = `<div class="error">${escHtml(e.message)}</div>`;
+  }
+}
+
+// ==================== TRANSACTION ====================
+async function showTx(txid) {
+  showPage('tx');
+  document.getElementById('txContent').innerHTML = '<div class="loading">Loading transaction...</div>';
+  try {
+    const r = await fetch(`${API}/tx/${txid}`);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('txContent').innerHTML = `<div class="error">${escHtml(d.error)}</div>`;
+      return;
+    }
+
+    if (d.in_mempool) {
+      document.getElementById('txContent').innerHTML = `
+        <div class="card"><div class="card-header">Transaction ${escHtml(shortHash(txid))}</div>
+        <div class="card-body"><div class="badge badge-purple">In Mempool</div>
+        <pre style="margin-top:12px;font-size:12px;overflow:auto;">${escHtml(JSON.stringify(d.mempool_data, null, 2))}</pre></div></div>`;
+      return;
+    }
+
+    // Inputs
+    let inRows = '';
+    if (d.vin && d.vin.length > 0) {
+      inRows = d.vin.map(vin => {
+        if (vin.coinbase) {
+          return `<tr><td colspan="3"><span class="badge badge-blue">Coinbase</span></td><td>New coins</td></tr>`;
+        }
+        return `<tr>
+          <td>${linkTxid(vin.txid)}:${escHtml(String(vin.vout??'—'))}</td>
+          <td>${vin.address ? linkAddress(vin.address) : '—'}</td>
+          <td style="text-align:right;">${vin.value !== null && vin.value !== undefined ? vin.value.toFixed(8) + ' QNT' : '—'}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Outputs
+    let outRows = '';
+    if (d.vout && d.vout.length > 0) {
+      outRows = d.vout.map(vout => {
+        const addrs = (vout.scriptPubKey?.addresses || vout.scriptPubKey?.address || []).toString();
+        return `<tr>
+          <td>${escHtml(String(vout.n??'—'))}</td>
+          <td>${addrs ? linkAddress(addrs) : escHtml(vout.scriptPubKey?.hex||'—').slice(0,40)}</td>
+          <td><span class="badge badge-blue">${escHtml(vout.scriptPubKey?.type||'unknown')}</span></td>
+          <td style="text-align:right;" class="tx-amount">${(vout.value||0).toFixed(8)} QNT</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('txContent').innerHTML = `
+      <div class="card">
+        <div class="card-header">Transaction</div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-label">TXID</div><div class="detail-value hash">${escHtml(d.txid)}</div>
+            <div class="detail-label">Hash</div><div class="detail-value hash">${escHtml(d.hash||'—')}</div>
+            <div class="detail-label">Block</div><div class="detail-value">${d.blockhash ? linkHash(d.blockhash, 'View Block') : '<span class="badge badge-purple">Unconfirmed</span>'}</div>
+            <div class="detail-label">Confirmations</div><div class="detail-value">${escHtml(String(d.confirmations??0))}</div>
+            <div class="detail-label">Time</div><div class="detail-value">${tsToDate(d.time||d.blocktime)}</div>
+            <div class="detail-label">Size</div><div class="detail-value">${fmtSize(d.size)} (${escHtml(String(d.vsize??'—'))} vB)</div>
+            <div class="detail-label">Weight</div><div class="detail-value">${escHtml(String(d.weight??'—'))} WU</div>
+            <div class="detail-label">Version</div><div class="detail-value">${escHtml(String(d.version??'—'))}</div>
+            <div class="detail-label">Locktime</div><div class="detail-value">${escHtml(String(d.locktime??'—'))}</div>
+            <div class="detail-label">Fee</div><div class="detail-value">${d.fee !== null && d.fee !== undefined ? d.fee.toFixed(8) + ' QNT' : '—'}</div>
+            <div class="detail-label">Total Input</div><div class="detail-value">${d.total_in !== null && d.total_in !== undefined ? d.total_in.toFixed(8) + ' QNT' : '—'}</div>
+            <div class="detail-label">Total Output</div><div class="detail-value">${(d.total_out||0).toFixed(8)} QNT</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Inputs (${d.vin?d.vin.length:0})</div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Previous Output</th><th>Address</th><th style="text-align:right;">Value</th></tr></thead>
+            <tbody>${inRows || '<tr><td colspan="3">No inputs</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Outputs (${d.vout?d.vout.length:0})</div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>Index</th><th>Address</th><th>Type</th><th style="text-align:right;">Value</th></tr></thead>
+            <tbody>${outRows || '<tr><td colspan="4">No outputs</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('txContent').innerHTML = `<div class="error">${escHtml(e.message)}</div>`;
+  }
+}
+
+// ==================== ADDRESS ====================
+async function showAddress(addr) {
+  showPage('address');
+  document.getElementById('addressContent').innerHTML = '<div class="loading">Loading address...</div>';
+  try {
+    const r = await fetch(`${API}/address/${encodeURIComponent(addr)}`);
+    const d = await r.json();
+    if (d.error) {
+      document.getElementById('addressContent').innerHTML = `<div class="error">${escHtml(d.error)}</div>`;
+      return;
+    }
+
+    let txRows = '';
+    if (d.transactions && d.transactions.length > 0) {
+      txRows = d.transactions.map(tx => {
+        const net = tx.received - tx.sent;
+        const netClass = net >= 0 ? 'tx-amount' : 'tx-amount-sent';
+        const netSign = net >= 0 ? '+' : '';
+        return `<tr>
+          <td>${linkTxid(tx.txid)}</td>
+          <td>${tx.blockhash ? linkHash(tx.blockhash, 'Block') : '<span class="badge badge-purple">Unconfirmed</span>'}</td>
+          <td>${escHtml(String(tx.confirmations??0))}</td>
+          <td>${tsToDate(tx.time||tx.blocktime)}</td>
+          <td style="text-align:right;" class="${netClass}">${netSign}${net.toFixed(8)} QNT</td>
+        </tr>`;
+      }).join('');
+    }
+
+    document.getElementById('addressContent').innerHTML = `
+      <div class="card">
+        <div class="card-header">Address</div>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-label">Address</div><div class="detail-value hash" style="word-break:break-all;">${escHtml(d.address)}</div>
+            <div class="detail-label">Balance</div><div class="detail-value" style="font-size:1.2em;font-weight:700;color:var(--accent2);">${(d.balance||0).toFixed(8)} QNT</div>
+            <div class="detail-label">Transactions</div><div class="detail-value">${escHtml(String(d.tx_count||0))}</div>
+            <div class="detail-label">UTXOs</div><div class="detail-value">${escHtml(String(d.utxo_count||0))}</div>
+            <div class="detail-label">Mine</div><div class="detail-value">${d.ismine ? '<span class="badge badge-green">Yes</span>' : '<span>No</span>'}</div>
+            <div class="detail-label">Watch Only</div><div class="detail-value">${d.iswatchonly ? '<span class="badge badge-blue">Yes</span>' : '<span>No</span>'}</div>
+            <div class="detail-label">Script</div><div class="detail-value">${d.isscript ? '<span class="badge badge-purple">Yes</span>' : '<span>No</span>'}</div>
+            <div class="detail-label">Witness</div><div class="detail-value">${d.iswitness ? '<span class="badge badge-purple">Yes</span>' : '<span>No</span>'}</div>
+            ${d.pubkey ? `<div class="detail-label">Public Key</div><div class="detail-value hash" style="font-size:11px;word-break:break-all;">${escHtml(d.pubkey)}</div>` : ''}
+            ${d.script ? `<div class="detail-label">Script</div><div class="detail-value hash" style="font-size:11px;word-break:break-all;">${escHtml(d.script)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Transaction History</div>
+        <div class="card-body">
+          <table>
+            <thead><tr><th>TXID</th><th>Block</th><th>Confirmations</th><th>Time</th><th style="text-align:right;">Net</th></tr></thead>
+            <tbody>${txRows || '<tr><td colspan="5" class="loading">No transactions</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('addressContent').innerHTML = `<div class="error">${escHtml(e.message)}</div>`;
+  }
+}
+
+// ==================== INIT ====================
+loadStatus();
+loadBlocks();
+// Refresh every 30s
+setInterval(loadStatus, 30000);
+setInterval(loadBlocks, 30000);
+</script>
+</body>
+</html>

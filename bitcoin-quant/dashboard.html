@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QNT Network Dashboard</title>
+<style>
+:root{--bg:#0a0e17;--card:#111827;--border:#2a3a55;--text:#e8edf5;--dim:#8899bb;--accent:#00d4aa;--blue:#3b82f6;--purple:#a855f7;--orange:#f59e0b;--green:#22c55e;--red:#ef4444}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'SF Mono','Fira Code',monospace;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1200px;margin:0 auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:20px}
+.logo{font-size:22px;font-weight:800;color:var(--accent)}
+.logo small{font-size:10px;color:var(--dim);display:block;letter-spacing:2px}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green)}
+.dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.card:hover{border-color:rgba(255,255,255,.1)}
+.card .label{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.card .value{font-size:28px;font-weight:700}
+.card .sub{font-size:11px;color:var(--dim);margin-top:4px}
+.card .bar{height:3px;border-radius:3px;margin-top:12px}
+.card:nth-child(1) .bar{background:var(--accent)}
+.card:nth-child(2) .bar{background:var(--blue)}
+.card:nth-child(3) .bar{background:var(--purple)}
+.card:nth-child(4) .bar{background:var(--orange)}
+.card:nth-child(5) .bar{background:var(--green)}
+.card:nth-child(6) .bar{background:var(--red)}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th{text-align:left;padding:10px 12px;font-size:11px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.hash{font-family:'SF Mono',monospace;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase}
+.badge.ok{background:rgba(34,197,94,.15);color:var(--green)}
+.badge.warn{background:rgba(245,158,11,.15);color:var(--orange)}
+.badge.err{background:rgba(239,68,68,.15);color:var(--red)}
+.badge.dim{background:rgba(136,153,187,.15);color:var(--dim)}
+.refresh{font-size:11px;color:var(--dim);text-align:center;margin-top:16px}
+.error-msg{text-align:center;padding:60px;color:var(--red);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">QNT <small>QUANTUM-RESISTANT BLOCKCHAIN</small></div>
+    <div class="status"><div class="dot" id="statusDot" style="background:var(--dim)"></div><span id="statusText">Connecting...</span></div>
+  </header>
+
+  <div class="grid" id="statsGrid">
+    <div class="card"><div class="label">Chain</div><div class="value" id="sChain">—</div><div class="bar"></div></div>
+    <div class="card"><div class="label">Block Height</div><div class="value" id="sHeight">—</div><div class="bar"></div></div>
+    <div class="card"><div class="label">Difficulty</div><div class="value" id="sDiff">—</div><div class="bar"></div></div>
+    <div class="card"><div class="label">Connections</div><div class="value" id="sConn">—</div><div class="bar"></div></div>
+    <div class="card"><div class="label">Mempool</div><div class="value" id="sPool">—</div><div class="bar"></div></div>
+    <div class="card"><div class="label">Network Hash/s</div><div class="value" id="sHash">—</div><div class="bar"></div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="label" style="margin-bottom:12px">Latest Blocks</div>
+    <table>
+      <thead><tr><th>Height</th><th>Hash</th><th>Time</th><th>Txs</th><th>Size</th></tr></thead>
+      <tbody id="blocksTable"><tr><td colspan="5" style="text-align:center;color:var(--dim);padding:30px">Loading...</td></tr>
+    </table>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div class="label" style="margin-bottom:12px">Network Info</div>
+      <table>
+        <tbody>
+          <tr><td style="color:var(--dim);width:140px">Version</td><td id="nVersion">—</td></tr>
+          <tr><td style="color:var(--dim)">Protocol</td><td id="nProto">—</td></tr>
+          <tr><td style="color:var(--dim)">Relay Fee</td><td id="nFee">—</td></tr>
+          <tr><td style="color:var(--dim)">Warnings</td><td id="nWarn">—</td></tr>
+          <tr><td style="color:var(--dim)">XMSS Support</td><td><span class="badge ok">Enabled</span></td></tr>
+          <tr><td style="color:var(--dim)">PoUW</td><td><span class="badge ok" id="pouwBadge">Active</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="label" style="margin-bottom:12px">Development Progress</div>
+      <table>
+        <tbody>
+          <tr><td style="color:var(--dim);width:140px">Phase 1</td><td><span class="badge ok">Complete</span></td></tr>
+          <tr><td style="color:var(--dim)">Phase 2</td><td><span class="badge ok">Complete</span></td></tr>
+          <tr><td style="color:var(--dim)">Phase 3 (Wallet)</td><td><span class="badge ok">Complete</span></td></tr>
+          <tr><td style="color:var(--dim)">Phase 3e (State)</td><td><span class="badge ok">Complete</span></td></tr>
+          <tr><td style="color:var(--dim)">Phase 4 (Audit)</td><td><span class="badge ok">Complete</span></td></tr>
+          <tr><td style="color:var(--dim)">Phase 5 (Docs)</td><td><span class="badge ok">Complete</span></td></tr>
+          <tr><td style="color:var(--dim)">Phase 6-7</td><td><span class="badge dim">Pending</span></td></tr>
+          <tr><td style="color:var(--dim)">Known Issues</td><td><span class="badge warn">2 Open</span></td></tr>
+          <tr><td style="color:var(--dim)">Changelog</td><td><a href="/changelog" style="font-size:12px">View Full Log →</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="refresh" id="refreshTime">Last updated: —</div>
+</div>
+
+<script>
+const API = '/api';
+
+function fmtHash(h) { if (!h) return '—'; return h.slice(0, 10) + '…' + h.slice(-8); }
+function fmtDiff(d) { if (!d) return '—'; if (d >= 1e12) return (d / 1e12).toFixed(2) + ' T'; if (d >= 1e9) return (d / 1e9).toFixed(2) + ' G'; if (d >= 1e6) return (d / 1e6).toFixed(2) + ' M'; return d.toFixed(4); }
+function fmtSize(b) { if (!b) return '—'; if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB'; if (b >= 1024) return (b / 1024).toFixed(2) + ' KB'; return b + ' B'; }
+function tsToDate(ts) { if (!ts) return '—'; return new Date(ts * 1000).toLocaleString(); }
+function fmtHashps(h) { if (!h) return '—'; if (h >= 1e18) return (h / 1e18).toFixed(2) + ' EH/s'; if (h >= 1e15) return (h / 1e15).toFixed(2) + ' PH/s'; if (h >= 1e12) return (h / 1e12).toFixed(2) + ' TH/s'; if (h >= 1e9) return (h / 1e9).toFixed(2) + ' GH/s'; return h.toFixed(0) + ' H/s'; }
+
+async function loadStatus() {
+  try {
+    const r = await fetch(API + '/status');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    document.getElementById('sChain').textContent = d.chain || '—';
+    document.getElementById('sHeight').textContent = d.blocks ?? '—';
+    document.getElementById('sDiff').textContent = fmtDiff(d.difficulty);
+    document.getElementById('sConn').textContent = d.connections ?? '—';
+    document.getElementById('sPool').textContent = (d.mempool_txs ?? 0) + ' txs';
+    document.getElementById('sHash').textContent = fmtHashps(d.networkhashps);
+    document.getElementById('nVersion').textContent = d.version ?? '—';
+    document.getElementById('nProto').textContent = d.protocolversion ?? '—';
+    document.getElementById('nFee').textContent = d.relayfee ? d.relayfee + ' QNT' : '—';
+    document.getElementById('nWarn').textContent = d.warnings || 'None';
+    // PoUW status from getmininginfo
+    if (d.pouw_enabled !== undefined) {
+      document.getElementById('pouwBadge').textContent = d.pouw_enabled ? 'Active' : 'Inactive';
+      document.getElementById('pouwBadge').className = 'badge ' + (d.pouw_enabled ? 'ok' : 'dim');
+    }
+    document.getElementById('statusDot').style.background = 'var(--green)';
+    document.getElementById('statusText').textContent = 'Connected — ' + (d.chain || 'unknown');
+  } catch(e) {
+    document.getElementById('statusDot').style.background = 'var(--red)';
+    document.getElementById('statusText').textContent = 'Error: ' + e.message;
+  }
+}
+
+async function loadBlocks() {
+  try {
+    const r = await fetch(API + '/blocks/latest?count=15');
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    const blocks = d.blocks || [];
+    if (!blocks.length) { document.getElementById('blocksTable').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:30px">No blocks yet</td></tr>'; return; }
+    document.getElementById('blocksTable').innerHTML = blocks.map(b =>
+      '<tr><td>' + b.height + '</td><td class="hash">' + fmtHash(b.hash) + '</td><td>' + tsToDate(b.time) + '</td><td>' + b.tx_count + '</td><td>' + fmtSize(b.size) + '</td></tr>'
+    ).join('');
+  } catch(e) {
+    document.getElementById('blocksTable').innerHTML = '<tr><td colspan="5" class="error-msg">' + e.message + '</td></tr>';
+  }
+}
+
+async function refresh() {
+  await Promise.all([loadStatus(), loadBlocks()]);
+  document.getElementById('refreshTime').textContent = 'Last updated: ' + new Date().toLocaleString();
+}
+
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>
