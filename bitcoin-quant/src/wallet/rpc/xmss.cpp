@@ -507,7 +507,7 @@ RPCHelpMan importxmsskey()
 
         // Decode seckey
         std::vector<uint8_t> seckey = ParseHex(request.params[1].get_str());
-        if (false && seckey.empty()) { // temporarily disabled
+        if (seckey.empty()) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid XMSS secret key: empty");
         }
 
@@ -601,8 +601,8 @@ RPCHelpMan exportxmsskey()
         }
 
         // Get secret key (this is sensitive!)
-        std::vector<uint8_t> seckey; // TODO: implement GetSecKeyForPubkey
-        if (false && seckey.empty()) { // temporarily disabled
+        std::vector<uint8_t> seckey = signer->GetSecKeyForPubkey(pubkey);
+        if (seckey.empty()) {
             throw JSONRPCError(RPC_WALLET_ERROR, "Secret key not available (watch-only wallet?)");
         }
 

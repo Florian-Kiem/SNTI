@@ -120,6 +120,14 @@ public:
     // QNT: Get pubkey by address hash (uint160 / CKeyID)
     std::vector<uint8_t> GetPubKeyForHash(const uint160& addr_hash) const;
 
+    /**
+     * Get the secret key bytes for a given XMSS public key.
+     * WARNING: handle with extreme care.
+     * @param pubkey 64-byte XMSS public key
+     * @return serialized secret key bytes, or empty if not found
+     */
+    std::vector<uint8_t> GetSecKeyForPubkey(const std::vector<uint8_t>& pubkey) const;
+
 private:
     mutable RecursiveMutex cs_xmss_signer;
 

@@ -406,4 +406,16 @@ std::vector<uint8_t> CXMSSSigner::GetPubKeyForHash(const uint160& addr_hash) con
     return {};
 }
 
+
+// QNT: Get secret key bytes for a given XMSS public key (sensitive!)
+std::vector<uint8_t> CXMSSSigner::GetSecKeyForPubkey(const std::vector<uint8_t>& pubkey) const
+{
+    LOCK(cs_xmss_signer);
+    auto it = xmss_keys.find(pubkey);
+    if (it == xmss_keys.end()) {
+        return {};
+    }
+    return it->second.key.GetPrivKey();
+}
+
 } // namespace wallet
