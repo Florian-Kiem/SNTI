@@ -286,6 +286,33 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </table>
     </div>
   </div>
+
+  <!-- Phase 6c -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6c')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 6.6</span>
+        <span class="phase-name">Testnet Validation & Wallet RPC Fixes</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp6c">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p6c">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">6.6.1 — Testnet Launched on Official Genesis<div class="item-detail">Migrated from regtest to testnet using the official 15/Jun/2026 genesis block. 6 consecutive PoUW blocks mined, ~2.5-3s per block (XMSS keygen + sign)</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.6.2 — Key Lifecycle Documented<div class="item-detail">Confirmed each block generates a fresh, single-use XMSS key (not reused across the 1024-signature capacity). Noted as a known design tradeoff: simpler and avoids index-reuse risk, but discards 1023 of 1024 available signatures per key and adds ~2-3s per block for keygen</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.6.3 — Fixed CXMSSSigner::GetSecKeyForPubkey<div class="item-detail">Method was referenced by exportxmsskey RPC but never declared or implemented, causing a linker error. Implemented as a lookup into the in-memory xmss_keys map, returning the serialized secret key</div><div class="item-files">wallet/xmss_signer.h, wallet/xmss_signer.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.6.4 — Registered Missing RPC Commands<div class="item-detail">importxmsskey and exportxmsskey were implemented but never added to the wallet RPC command table, so they returned "Method not found" despite compiling successfully</div><div class="item-files">wallet/rpc/wallet.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.6.5 — End-to-End RPC Verification<div class="item-detail">getnewxmssaddress and exportxmsskey tested live on testnet: address generated, key exported with full XMSS secret key structure (OID, index, seed, WOTS chains) returned correctly</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <!-- Phase 7 -->
   <div class="phase">
     <div class="phase-header" onclick="toggle('p7')">
