@@ -36,8 +36,8 @@ sudo apt-get install -y \
 
 ```bash
 # Clone repository
-git clone https://github.com/quant-chain/qnt.git
-cd qnt
+git clone https://github.com/asepganzu-svg/bitcoin-quant.git
+cd bitcoin-quant/bitcoin-quant
 
 # Generate configure script
 ./autogen.sh
@@ -141,6 +141,53 @@ Get information about an XMSS address.
 
 ---
 
+
+#### `importxmsskey (seckey, pubkey, label)`
+
+Import an existing XMSS key pair into the wallet.
+
+**Parameters:**
+- `seckey` (string, required): Serialized XMSS secret key, hex-encoded
+- `pubkey` (string, required): 64-byte XMSS public key, hex-encoded
+- `label` (string, optional): Human-readable label for the key
+
+**Example:**
+```bash
+bitcoin-cli -testnet importxmsskey "<seckey-hex>" "<64-byte-pubkey-hex>" "restored_key"
+```
+
+---
+
+#### `exportxmsskey (address)`
+
+Export an XMSS private key from the wallet for backup. Fixed 16/Jun/2026 —
+this command previously returned "Method not found" because it was
+implemented but never registered in the RPC command table, and depended
+on `CXMSSSigner::GetSecKeyForPubkey()`, which did not exist. Both issues
+are resolved as of this build (see CHANGELOG Phase 6.6).
+
+**WARNING**: anyone with the secret key can spend funds from this address.
+Handle the output with the same care as a Bitcoin private key.
+
+**Parameters:**
+- `address` (string, required): The XMSS address to export the key for
+
+**Returns:**
+```json
+{
+  "pubkey": "hex...",
+  "seckey": "hex...",
+  "address": "q...",
+  "leaf_index": 0,
+  "remaining": 1024
+}
+```
+
+**Example:**
+```bash
+bitcoin-cli -testnet exportxmsskey "fmZyeGjBp4Yt4hSEfXi4byNhpfnE7UkMhv"
+```
+
 #### `sendtoxmssaddress (address, amount, ...)`
 
 Send QNT to an XMSS address.
@@ -184,7 +231,7 @@ Returns mining information including PoUW status.
 
 XMSS (eXtended Merkle Signature Scheme) is a **stateful** post-quantum signature scheme. Key properties:
 
-- **One-time signatures**: Each key pair can produce exactly 1,0024 signatures
+- **One-time signatures**: Each key pair can produce exactly 1,024 signatures
 - **Index tracking**: Each signature advances an internal counter
 - **Anti-reuse**: Reusing a key index leaks the private key
 - **Large signatures**: ~2,500 bytes per signature
@@ -244,12 +291,25 @@ bitcoin-cli -regtest getbalance
 ### PoUW Mining Process
 
 Each mined block:
-1. Generates fresh XMSS key pair (~1-2 seconds)
+1. Generates fresh XMSS key pair (~2-3 seconds, measured)
 2. Embeds pubkey in coinbase OP_RETURN
 3. Grinds SHA-256 nonce
 4. Signs block hash with XMSS
-5. Inserts signature into coinbase scriptSig
+5. Inserts signature into coinbase witness (not scriptSig — avoids the 100-byte push limit)
 6. Re-verifies PoW
+
+
+> **Important — actual key lifecycle differs from the ideal XMSS model.**
+> The XMSS-Wallet-Guide section above describes the ideal case: one key signing
+> up to 1024 times before rotation. In the current PoUW mining implementation
+> (`GenerateBlock()` in `rpc/mining.cpp`), this is NOT what happens. A fresh
+> XMSS key is generated and discarded for every single block — only index 0
+> of each key's 1024-signature capacity is ever used. This is a deliberate
+> simplification: it avoids any risk of state persistence bugs or accidental
+> index reuse across node restarts, at the cost of generating a brand-new key
+> every ~2-3 seconds (most of a block's mining time) and wasting 1023 of 1024
+> available signatures per key. This tradeoff has not yet been revisited as
+> of the 16/Jun/2026 testnet validation session — see CHANGELOG Phase 6.5.
 
 ### Mining RPC
 
@@ -283,7 +343,7 @@ bitcoin-cli -testnet getnetworkinfo
 | Parameter | Value |
 |-----------|-------|
 | Port | 19333 |
-| RPC Port | 19332 |
+| RPC Port | 29332 |
 | Address Prefix | m or n |
 | Magic Bytes | 0x71545354 ("qTST") |
 | Difficulty | Low (easy mining) |
