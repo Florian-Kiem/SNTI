@@ -365,6 +365,32 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </table>
     </div>
   </div>
+<!-- Phase 6f -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6f')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 6.9</span>
+        <span class="phase-name">Multi-Node Consensus — Critical SegWit Fix</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp6f">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p6f">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">6.9.1 — Discovered every QNT block violated BIP141<div class="item-detail">Stood up a second, fully independent node (separate process, separate datadir, separate ports) for the first time. Direct submitblock testing showed every block ever mined was rejected with bad-witness-nonce-size — the coinbase witness must be exactly one 32-byte reserved value per BIP141, but the 2500-byte XMSS signature was overwriting that slot entirely. Confirmed the mining node only accepted its own blocks due to its own validation path, not because the blocks were actually valid.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.9.2 — First fix attempt exposed a second, deeper problem<div class="item-detail">Moving the signature to a coinbase OP_RETURN output fixed the BIP141 violation but reintroduced a circular hash dependency: adding the output changes the merkle root, which changes block.GetHash() — the very hash the signature was computed against. Diagnosed via targeted debug logging showing correct extraction but failed verification.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.9.3 — Redesigned PoUW signing around a stable preimage<div class="item-detail">The signature now commits to a dedicated preimage hash (version, prevhash, time, bits, coinbase-without-signature txid, pubkey) computed and signed before the signature is attached anywhere. CheckPoUW() reconstructs the identical preimage by removing the signature output and rehashing, avoiding any dependency on the final block hash.</div><div class="item-files">rpc/mining.cpp, validation.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.9.4 — Verified via direct submitblock between independent nodes<div class="item-detail">Submitted 3 newly-mined blocks one at a time to a completely separate node process. All accepted. Resulting chain tip hash matched the mining node's tip exactly.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.9.5 — Verified via genuine automatic P2P relay<div class="item-detail">Connected the two independent nodes via addnode, then mined 2 new blocks on node 1 with zero further manual intervention. Node 2's height and best-block-hash advanced automatically and matched exactly — the first time QNT blocks have ever propagated across a real peer-to-peer connection rather than being validated by the node that mined them.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <!-- Phase 7 -->
   <div class="phase">
     <div class="phase-header" onclick="toggle('p7')">
