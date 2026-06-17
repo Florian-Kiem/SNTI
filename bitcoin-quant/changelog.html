@@ -340,6 +340,31 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </table>
     </div>
   </div>
+
+  <!-- Phase 6e -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6e')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 6.8</span>
+        <span class="phase-name">Adversarial Testing & XMSS Code Audit</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp6e">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p6e">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">6.8.1 — Audited all other XMSS sign/verify call sites<div class="item-detail">Cross-checked every Sign() and Verify() implementation across xmss_bridge.cpp, xmss_state.h, wallet/xmss_state.h and the dead-code pouw.h for the same buffer-sizing pattern that caused Phase 6.7's heap overflow. Sign() output buffers were confirmed safe (generous fixed margins); Verify() in xmss_state.h and pouw.h were found to have the identical undersized output buffer bug and were fixed for consistency, even though pouw.h is not compiled into the build</div><div class="item-files">xmss_state.h, wallet/xmss_state.h, pouw.h</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.8.2 — Stress test: 50 corrupted block resubmissions<div class="item-detail">Took a valid block, corrupted random bytes inside the witness signature, and resubmitted it 50 times via submitblock. All were correctly handled as duplicates (SegWit witness data does not affect the legacy block hash used for header identity) — zero crashes, chain state unaffected. This confirmed network-input robustness but also revealed that witness malleation means a corrupted resubmission of an existing block never reaches CheckPoUW at all</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.8.3 — Adversarial test: genuinely invalid signature on a fresh block<div class="item-detail">Added a temporary, environment-variable-gated code path to deliberately flip one byte of a real XMSS signature before broadcast, producing a freshly-mined block (new hash, not a duplicate). Result: AcceptBlock rejected it with pouw-invalid-sig, the node did not crash, and the chain tip did not advance — direct proof that consensus genuinely rejects an invalid PoUW signature, not just a missing one. Test code was removed immediately after confirmation</div><div class="item-detail">Log: "ERROR: AcceptBlock: pouw-invalid-sig, PoUW: XMSS signature verification failed"</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <!-- Phase 7 -->
   <div class="phase">
     <div class="phase-header" onclick="toggle('p7')">
