@@ -313,6 +313,33 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </table>
     </div>
   </div>
+
+  <!-- Phase 6d -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6d')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 6.7</span>
+        <span class="phase-name">Critical Consensus & Memory Safety Fixes</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp6d">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p6d">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">6.7.1 — Discovered PoUW was never actually enforced<div class="item-detail">CheckPoUW() returned true unconditionally whenever nPoUWStartHeight > 0 (the production setting). The promised height-gated check in ContextualCheckBlock did not exist. Every prior block had a valid signature only because our own miner attached one out of habit — consensus never required it.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.7.2 — Implemented real height-gated PoUW enforcement<div class="item-detail">Added nHeight and fCheckPOW parameters through CheckPoUW → ContextualCheckBlock, so the signature check now genuinely runs against the chain's actual height on every block submission</div><div class="item-files">validation.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.7.3 — Fixed corrupted OP_RETURN pubkey format<div class="item-detail">std::vector&lt;uint8_t&gt;(0x40) was misread as "push byte 0x40" but actually constructs a 64-element zero-filled vector, producing a 131-byte malformed script instead of the intended 66-byte OP_RETURN. Every block's embedded XMSS public key was corrupted as a result.</div><div class="item-files">rpc/mining.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.7.4 — Found and fixed critical heap buffer overflow in XMSS Verify()<div class="item-detail">The reference xmssmt_core_sign_open() writes into its output buffer at offset params.sig_bytes before copying the message to the front, but our wrapper allocated the buffer at only 32 bytes. Every single verification call overflowed the heap, corrupting the allocator and crashing the node intermittently a few allocations later. Root-caused with gdb + Valgrind (not guessed), confirmed via "Invalid read ... inside an unallocated block" trace pointing directly at the call site.</div><div class="item-files">xmss_bridge.cpp, xmss_state.h, pouw.h</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.7.5 — Stress-tested fix with 30 consecutive blocks<div class="item-detail">20 blocks mined back-to-back with no crash (manual binary), followed by 10 more via the production systemd service — zero failures, zero restarts, confirming the fix holds under repeated real mining load</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <!-- Phase 7 -->
   <div class="phase">
     <div class="phase-header" onclick="toggle('p7')">
