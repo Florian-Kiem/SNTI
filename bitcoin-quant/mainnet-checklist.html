@@ -105,7 +105,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <thead><tr><th style="width:36%">Item</th><th style="width:14%">Status</th><th>Notes</th></tr></thead>
       <tbody>
         <tr><td>Single node running (testnet)</td><td><span class="status done">✅ Done</span></td><td class="item-note">systemd-managed, auto-restart configured</td></tr>
-        <tr><td>Multiple independent nodes</td><td><span class="status notdone">❌ Not done</span></td><td class="item-note">All testing so far against one node on one VPS — no peer diversity, no real network conditions</td></tr>
+        <tr><td>Multiple independent nodes</td><td><span class="status done">✅ Verified</span></td><td class="item-note">Two fully independent node processes reached identical chain state via direct submitblock and genuine automatic P2P relay — see Changelog Phase 6.9</td></tr>
         <tr><td>DNS seeds</td><td><span class="status notdone">❌ Not done</span></td><td class="item-note">Commented out in chainparams.cpp, hardcoded single IP seed only</td></tr>
         <tr><td>Public block explorer</td><td><span class="status done">✅ Live</span></td><td class="item-note">Flask-based explorer running, API verified</td></tr>
         <tr><td>Dashboard / mining / whitepaper pages</td><td><span class="status done">✅ Live</span></td><td class="item-note">All return HTTP 200</td></tr>
@@ -136,6 +136,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div class="section-sub">Items most likely to be glossed over under launch pressure — each is a real, unverified assumption</div>
     </div>
     <div class="gaps">
+      <div class="gap-item">
+        <div class="gap-num">0</div>
+        <div class="gap-text"><strong>Resolved 17/Jun — was the most severe gap of all.</strong> Every QNT block ever mined violated BIP141's coinbase witness rule, meaning no node other than the one that mined a block could ever accept it. This was undetectable with a single node and was only found once a second independent node was actually stood up. Fixed via a stable preimage signing design — see Changelog Phase 6.9. This is the strongest argument yet for never skipping the multi-node test, no matter how much single-node testing looks clean.</div>
+      </div>
       <div class="gap-item">
         <div class="gap-num">1</div>
         <div class="gap-text"><strong>No external eyes have looked at this code.</strong> Every fix so far has been found by this team, in this session. A second reviewer — even an informal one — would likely find things missed here.</div>
