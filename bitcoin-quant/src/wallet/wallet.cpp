@@ -29,6 +29,7 @@
 #include <logging.h>
 #include <outputtype.h>
 #include <wallet/xmss_signer.h>
+#include <wallet/xmss_address.h>
 #include <policy/feerate.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
@@ -1572,6 +1573,33 @@ isminetype CWallet::IsMine(const CTxDestination& dest) const
 isminetype CWallet::IsMine(const CScript& script) const
 {
     AssertLockHeld(cs_wallet);
+
+    // QNT FIX (18/Jun/2026): XMSS keys are managed independently via
+    // CXMSSSigner rather than derived from a wallet descriptor — there is
+    // no HD derivation path for XMSS the way there is for ECDSA/Schnorr,
+    // so a P2XMSS script is never registered into m_cached_spks by the
+    // normal descriptor TopUp/expansion process. Without this check,
+    // descriptor wallets (the default and, in this build, only creatable
+    // wallet type) never recognize funds sent to XMSS addresses as
+    // spendable: listunspent omits them and CreateTransaction's coin
+    // selection can never pick them, even though the wallet genuinely
+    // holds the key. Discovered via end-to-end wallet testing — see
+    // DEVDOCS for the full investigation.
+    {
+        std::vector<std::vector<unsigned char>> solutions;
+        TxoutType type = Solver(script, solutions);
+        if (type == TxoutType::P2XMSS && solutions.size() == 1 && solutions[0].size() == 64) {
+            uint160 addr_hash = XMSSAddr::Hash(solutions[0]);
+            wallet::CXMSSSigner* signer = GetXMSSSigner();
+            if (signer) {
+                uint160 addr_hash_copy = addr_hash;
+                std::vector<uint8_t> found_pubkey = signer->GetPubKeyForHash(addr_hash_copy);
+                if (found_pubkey.size() == 64) {
+                    return ISMINE_SPENDABLE;
+                }
+            }
+        }
+    }
 
     // Search the cache so that IsMine is called only on the relevant SPKMs instead of on everything in m_spk_managers
     const auto& it = m_cached_spks.find(script);

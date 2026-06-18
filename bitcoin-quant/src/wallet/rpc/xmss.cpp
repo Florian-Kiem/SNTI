@@ -460,6 +460,36 @@ RPCHelpMan sendfromxmssaddress()
         CCoinControl coin_control;
         EnsureWalletIsUnlocked(*pwallet);
 
+        // QNT FIX (18/Jun/2026): from_hash was decoded above purely to
+        // validate the address format, then never used again — the empty
+        // CCoinControl left automatic coin selection completely free to
+        // pick ANY spendable UTXO in the wallet, silently ignoring the
+        // caller's chosen source address (confirmed via end-to-end
+        // testing: this RPC was sending real funds, just not from the
+        // XMSS address it claimed to send from). Explicitly select every
+        // UTXO whose scriptPubKey is a P2XMSS output matching this exact
+        // address's pubkey hash, and disallow pulling in unrelated inputs.
+        {
+            bool found_input = false;
+            auto avail = AvailableCoinsListUnspent(*pwallet);
+            for (const auto& out : avail.All()) {
+                std::vector<std::vector<unsigned char>> solutions;
+                TxoutType type = Solver(out.txout.scriptPubKey, solutions);
+                if (type == TxoutType::P2XMSS && solutions.size() == 1 && solutions[0].size() == 64) {
+                    uint160 this_hash = XMSSAddr::Hash(solutions[0]);
+                    if (this_hash == from_hash) {
+                        coin_control.Select(out.outpoint);
+                        found_input = true;
+                    }
+                }
+            }
+            if (!found_input) {
+                throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS,
+                    "No spendable funds found at this XMSS address");
+            }
+            coin_control.m_allow_other_inputs = true;
+        }
+
         // Create and sign transaction with XMSS
         auto res = CreateTransaction(*pwallet, recipients, /*change_pos=*/std::nullopt, coin_control, /*sign=*/true);
         if (!res) {

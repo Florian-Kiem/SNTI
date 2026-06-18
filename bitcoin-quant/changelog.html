@@ -416,6 +416,32 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </table>
     </div>
   </div>
+
+  <!-- Phase 6h -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6h')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 6.11</span>
+        <span class="phase-name">Wallet Spending Gap, Retarget &amp; Halving Fix</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp6h">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p6h">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">6.11.1 — Fixed AddXMSSKeyToKeystore and getnewxmssaddress<div class="item-detail">AddXMSSKeyToKeystore was a no-op stub from an earlier session (added only to satisfy a linker reference), and getnewxmssaddress never called it at all. Keys generated via getnewxmssaddress were therefore never registered with the ScriptPubKeyMan-level IsMine() check, so funds sent to them never appeared in listunspent. Funds were never at risk — a separate CXMSSSigner-based check still correctly reported ismine:true — but spending through the normal wallet flow was effectively blocked. Implemented the bridge and wired it into getnewxmssaddress.</div><div class="item-files">wallet/wallet.cpp, wallet/rpc/xmss.cpp</div></td></tr>
+          <tr><td class="chk notdone">⚠</td><td class="item-name">6.11.2 — Discovered a deeper architectural gap: XMSS only wired into the deprecated legacy wallet backend<div class="item-detail">The fix above only takes effect for legacy (BDB) wallets via LegacyScriptPubKeyMan. The current binary is compiled without BDB support at all (legacy wallets cannot even be created), and the default/only wallet backend available — descriptor wallets (DescriptorScriptPubKeyMan) — has no XMSS integration whatsoever. Practical result: XMSS addresses can receive funds (confirmed on-chain, confirmed via getxmssaddressinfo), but spending those funds back out through the standard wallet flow does not work in the current build. sendfromxmssaddress does not fail loudly — it silently falls back to spending unrelated wallet UTXOs instead of the requested XMSS funds. This is a genuine architecture gap, not a quick fix: properly supporting spending requires integrating XMSS into DescriptorScriptPubKeyMan, which is a substantially different data model (descriptors + HD derivation vs. a simple per-script map). Flagged here as a hard blocker for any mainnet claim that XMSS wallet round-trips work end-to-end.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.11.3 — Difficulty retarget algorithm verified<div class="item-detail">pow.cpp confirmed completely unmodified from upstream Bitcoin Core — no QNT-specific changes at all. DifficultyAdjustmentInterval() correctly computes 20,160 blocks (14 days) from nPowTargetTimespan/nPowTargetSpacing, independent of any other QNT parameter. Numerically simulated CalculateNextWorkRequired's core formula across five scenarios (on-time, 2x fast, 2x slow, 10x fast, 10x slow) — difficulty scaled exactly as expected and the 4x adjustment-bound safety clamp engaged correctly at the extremes.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.11.4 — Found and fixed a 10x error in the halving schedule<div class="item-detail">While verifying retarget math, discovered nSubsidyHalvingInterval = 210,000 blocks at 60s/block produces a halving every ~146 days (0.4 years), not the "~4 years" the whitepaper explicitly promises — and not even the "~2 years" an in-code comment separately and also-incorrectly claimed. Root cause: Bitcoin's 210,000-block interval assumes 600s/block; QNT blocks are 10x faster (60s) but the block count was never scaled up to compensate. Fixed nSubsidyHalvingInterval to 2,100,000 for mainnet, testnet, and signet (10x), restoring the intended ~4-year halving cadence. Regtest's separate 150-block interval (intentionally fast for testing) was left untouched.</div><div class="item-files">kernel/chainparams.cpp</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <!-- Phase 7 -->
   <div class="phase">
     <div class="phase-header" onclick="toggle('p7')">

@@ -86,8 +86,14 @@ public:
         m_chain_type = ChainType::MAIN;
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
-        // Whitepaper: 210,000 blocks halving interval (~2 years at 60s blocks)
-        consensus.nSubsidyHalvingInterval = 210000;
+        // QNT FIX (18/Jun/2026): was 210,000 (Bitcoin's value, unscaled), which
+        // at 60s/block gives ~146 days between halvings, not the "~4 years"
+        // the whitepaper promises (and not even the "~2 years" the old
+        // comment here claimed -- both were wrong, and disagreed with each
+        // other). Bitcoin's 210,000-block halving assumes 600s/block; QNT
+        // blocks are 10x faster (60s), so the interval must be 10x more
+        // blocks (2,100,000) to land on the same ~4-year real-world cadence.
+        consensus.nSubsidyHalvingInterval = 2100000;
         consensus.BIP34Height = 1;
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1;
@@ -184,7 +190,7 @@ public:
         m_chain_type = ChainType::TESTNET;
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
-        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.nSubsidyHalvingInterval = 2100000;  // QNT FIX 18/Jun/2026: scaled 10x for 60s blocks, see mainnet comment
         consensus.BIP34Height = 1;
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1;
@@ -303,7 +309,7 @@ public:
         m_chain_type = ChainType::SIGNET;
         consensus.signet_blocks = true;
         consensus.signet_challenge.assign(bin.begin(), bin.end());
-        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.nSubsidyHalvingInterval = 2100000;  // QNT FIX 18/Jun/2026: scaled 10x for 60s blocks, see mainnet comment
         consensus.BIP34Height = 1;
         consensus.BIP34Hash = uint256{};
         consensus.BIP65Height = 1;
