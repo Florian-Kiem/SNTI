@@ -4,6 +4,7 @@
 
 #if defined(HAVE_CONFIG_H)
 #include <config/bitcoin-config.h>
+#include <chainparams.h>
 #endif
 
 #include <wallet/rpc/xmss.h>
@@ -89,7 +90,7 @@ RPCHelpMan getnewxmssaddress()
             }
         }
 
-        std::string addr = XMSSAddr::Encode(pubkey, /*testnet=*/false);
+        std::string addr = XMSSAddr::Encode(pubkey, Params().IsTestChain());
 
         UniValue result(UniValue::VOBJ);
         result.pushKV("address", addr);
@@ -148,7 +149,7 @@ RPCHelpMan listxmsskeys()
         for (const auto& pubkey : keys) {
             if (pubkey.size() != 64) continue;
 
-            std::string addr = XMSSAddr::Encode(pubkey, /*testnet=*/false);
+            std::string addr = XMSSAddr::Encode(pubkey, Params().IsTestChain());
             uint32_t idx = signer->GetLeafIndex(pubkey);
 
             UniValue entry(UniValue::VOBJ);
@@ -200,7 +201,7 @@ RPCHelpMan getxmssaddressinfo()
         std::string addr_str = request.params[0].get_str();
 
         uint160 hash;
-        bool is_xmss = XMSSAddr::Decode(addr_str, hash, /*testnet=*/false);
+        bool is_xmss = XMSSAddr::Decode(addr_str, hash, Params().IsTestChain());
 
         UniValue result(UniValue::VOBJ);
 
@@ -282,7 +283,7 @@ RPCHelpMan sendtoxmssaddress()
         std::string addr_str = request.params[0].get_str();
 
         uint160 hash;
-        if (!XMSSAddr::Decode(addr_str, hash, /*testnet=*/false)) {
+        if (!XMSSAddr::Decode(addr_str, hash, Params().IsTestChain())) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid XMSS address");
         }
 
@@ -391,14 +392,14 @@ RPCHelpMan sendfromxmssaddress()
 
         // Decode source XMSS address
         uint160 from_hash;
-        if (!XMSSAddr::Decode(from_addr_str, from_hash, /*testnet=*/false)) {
+        if (!XMSSAddr::Decode(from_addr_str, from_hash, Params().IsTestChain())) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid source XMSS address");
         }
 
 // Determine destination type and build output
         CTxDestination dest;
         uint160 to_hash;
-        bool to_xmss = XMSSAddr::Decode(to_addr_str, to_hash, /*testnet=*/false);
+        bool to_xmss = XMSSAddr::Decode(to_addr_str, to_hash, Params().IsTestChain());
 
         if (to_xmss) {
             // Try to get full pubkey for P2XMSS output
@@ -526,7 +527,7 @@ RPCHelpMan importxmsskey()
 
         // Compute address from pubkey
         uint160 hash = XMSSAddr::Hash(pubkey);
-        std::string addr = XMSSAddr::Encode(pubkey, /*testnet=*/false);
+        std::string addr = XMSSAddr::Encode(pubkey, Params().IsTestChain());
 
         // Store in keystore for IsMine detection
         pwallet->AddXMSSKeyToKeystore(hash, pubkey);
@@ -584,7 +585,7 @@ RPCHelpMan exportxmsskey()
 
         // Decode address to get hash
         uint160 hash;
-        if (!XMSSAddr::Decode(addr_str, hash, /*testnet=*/false)) {
+        if (!XMSSAddr::Decode(addr_str, hash, Params().IsTestChain())) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid XMSS address");
         }
 

@@ -391,6 +391,31 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </table>
     </div>
   </div>
+<!-- Phase 6g -->
+  <div class="phase">
+    <div class="phase-header" onclick="toggle('p6g')">
+      <div class="phase-title">
+        <span class="phase-num done">PHASE 6.10</span>
+        <span class="phase-name">Reorg, Wallet, &amp; Address Encoding Fix</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="phase-badge done">✅ COMPLETE</span>
+        <span class="phase-toggle" id="tp6g">▼</span>
+      </div>
+    </div>
+    <div class="phase-body open" id="p6g">
+      <div class="progress-bar"><div class="progress-fill done" style="width:100%"></div></div>
+      <table>
+        <thead><tr><th></th><th>Item</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk done">✅</td><td class="item-name">6.10.1 — Chain reorganization verified<div class="item-detail">Created a genuine fork: 2 blocks mined independently on node 1, 3 blocks mined independently on node 2. On connecting the nodes, node 1 automatically reorganized to node 2's longer (more-work) chain — old blocks correctly marked orphaned (confirmations: -1), both nodes remained stable with no crashes.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.10.2 — sendtoxmssaddress verified end-to-end<div class="item-detail">Sent QNT from a regular address to a freshly generated XMSS address, confirmed in a block, and verified the wallet correctly recognizes ownership (ismine: true) of the resulting XMSS output.</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.10.3 — Discovered and fixed XMSS address encoding inconsistency<div class="item-detail">The address shown by getnewxmssaddress did not match the address shown for the same funds in gettransaction after sendtoxmssaddress — same pubkey, two different address strings. Root cause: 8 XMSS wallet RPC commands hardcoded testnet=false when calling XMSSAddr::Encode/Decode regardless of the actual active chain, while the standard EncodeDestination() path correctly checked Params().IsTestChain(). Funds were never at risk (the wallet still recognized ownership via the underlying pubkey), but this kind of address mismatch is exactly the sort of thing that could make a user believe they sent funds to the wrong place. Fixed all 8 occurrences.</div><div class="item-files">wallet/rpc/xmss.cpp</div></td></tr>
+          <tr><td class="chk done">✅</td><td class="item-name">6.10.4 — Verified the fix directly<div class="item-detail">Generated a new XMSS address, sent funds to it, and confirmed the address shown in the resulting transaction's details now matches the originally generated address exactly.</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
   <!-- Phase 7 -->
   <div class="phase">
     <div class="phase-header" onclick="toggle('p7')">
