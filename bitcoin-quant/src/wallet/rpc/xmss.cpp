@@ -90,6 +90,11 @@ RPCHelpMan getnewxmssaddress()
             }
         }
 
+        // QNT FIX (18/Jun/2026): register this key with the ScriptPubKeyMan-level
+        // XMSS key map (via AddXMSSKeyToKeystore), not just CXMSSSigner. Without
+        // this, IsMine() never recognizes funds sent here as spendable.
+        uint160 new_addr_hash = XMSSAddr::Hash(pubkey);
+        pwallet->AddXMSSKeyToKeystore(new_addr_hash, pubkey);
         std::string addr = XMSSAddr::Encode(pubkey, Params().IsTestChain());
 
         UniValue result(UniValue::VOBJ);

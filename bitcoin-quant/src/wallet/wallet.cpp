@@ -4558,13 +4558,36 @@ void CWallet::TopUpCallback(const std::set<CScript>& spks, ScriptPubKeyMan* spkm
 }
 
 // QNT: XMSS wallet key management implementations
+//
+// QNT FIX (18/Jun/2026): this was a no-op stub (added earlier only to fix
+// a linker error for exportxmsskey) and never actually registered the key
+// anywhere. The consequence: CXMSSSigner (used by getnewxmssaddress,
+// getxmssaddressinfo, etc.) and LegacyScriptPubKeyMan::m_xmss_keys (used by
+// IsMine() — the check that drives listunspent, balance, and automatic
+// coin selection) are two separate, unsynchronized stores. A key generated
+// via getnewxmssaddress was never registered with the ScriptPubKeyMan, so
+// funds received at that address were genuinely invisible to listunspent
+// and to CreateTransaction's coin selection — sendfromxmssaddress silently
+// fell back to spending other, unrelated wallet UTXOs instead of the
+// intended XMSS funds. The funds themselves were never at risk (still
+// safely on-chain, still recognized via the separate CXMSSSigner-based
+// ismine check used by getxmssaddressinfo), but they were not spendable
+// through the normal wallet flow. This now actually bridges the two
+// stores so IsMine() — and therefore listunspent/coin selection — can see
+// XMSS-controlled outputs as spendable.
 void CWallet::AddXMSSKeyToKeystore(const uint160& addr_hash, const std::vector<uint8_t>& pubkey)
 {
     LOCK(cs_wallet);
-    if (m_xmss_signer) {
-        (void)addr_hash;
-        (void)pubkey;
+    LegacyScriptPubKeyMan* legacy_spkm = GetLegacyScriptPubKeyMan();
+    if (legacy_spkm) {
+        // Secret key storage/encryption for this path is not yet
+        // implemented (see LegacyScriptPubKeyMan::AddXMSSKey's own TODO) —
+        // passing an empty vector here only registers the pubkey for
+        // IsMine()/spendability recognition, matching what AddXMSSKey
+        // actually persists today.
+        legacy_spkm->AddXMSSKey(pubkey, {});
     }
+    (void)addr_hash;
 }
 
 bool CWallet::GetXMSSPubKey(const uint160& addr_hash, std::vector<uint8_t>& pubkey_out) const
