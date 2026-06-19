@@ -454,3 +454,167 @@ treating 1023 effective signatures per key as the safe practical maximum).
 | CheckPoUW | validation.cpp | Block PoUW verification |
 | GenerateBlock | rpc/mining.cpp | PoUW mining loop |
 | OP_XMSS_CHECKSIG | script/interpreter.cpp | Script verification |
+
+## ⚠️ ACTIVE BLOCKER — XMSS Wallet Spending (as of 18/Jun/2026)
+
+**Status: investigation complete, root cause confirmed, fix NOT yet implemented.**
+**This is the single most important section in this document for resuming work.**
+
+### The goal
+Make `sendfromxmssaddress` actually work end-to-end: spend funds that were
+received at an XMSS address, broadcast successfully, confirm on-chain.
+
+### What was tried and ruled out, in order
+
+**1. Quick fix: bridge CXMSSSigner to LegacyScriptPubKeyMan**
+`AddXMSSKeyToKeystore()` was a no-op stub; `getnewxmssaddress` never called
+it. Implemented the bridge so generated keys register with
+`LegacyScriptPubKeyMan::AddXMSSKey()`. **Result: inert.** The active wallet
+is a descriptor wallet (`"descriptors": true`), and `GetLegacyScriptPubKeyMan()`
+returns nullptr for descriptor wallets — there is no Legacy SPKM instance to
+register anything with. Confirmed by trying to create an explicit legacy
+wallet: fails outright, `Compiled without bdb support (required for legacy
+wallets)`. **The current binary cannot create a legacy wallet at all.**
+
+**2. Real fix: proper descriptor integration (`xmss(pubkey)` descriptor type)**
+Investigated what this would require: a new `DescriptorImpl` subclass,
+parser support, wiring into `DescriptorScriptPubKeyMan`. Hit a hard type
+incompatibility: the entire `PubkeyProvider → DescriptorImpl → SigningProvider`
+pipeline is built around `CPubKey`, which is hard-capped at `SIZE = 65` bytes
+and whose `IsValid()`/`IsFullyValid()` checks call into libsecp256k1 to
+confirm the bytes are a valid EC point. XMSS's 64-byte raw pubkey (root ||
+PUB_SEED) is not EC data and cannot pass through `CPubKey` without either
+modifying `CPubKey` itself (used everywhere, very high blast radius) or
+building an entirely parallel non-`CPubKey` provider/descriptor/signing
+stack. Genuine multi-day-to-multi-week engineering effort, not a patch.
+
+**3. Pivoted to a different design philosophy: "swept one-time address"**
+Decision made (see new Design Decision Record below) to lean into XMSS's
+stateful nature rather than fight it: each XMSS address is used at most
+ONCE for spending (always index 0, never reused), matching the same
+philosophy already adopted for PoUW mining keys. This sidesteps the
+`CPubKey`/HD-derivation incompatibility entirely (no derivation needed —
+just individually tracked one-shot keys) and avoids the broken-last-signature
+reference library bug (index 1023) by construction, since index never
+advances past 0.
+
+**4. While implementing the manual transaction-builder approach for this
+design, found and fixed an unrelated but critical bug:** `CXMSSSigner::SaveState()`
+was only called from `CommitTransaction()` — a key generated via
+`getnewxmssaddress` lived in memory only until the wallet's first outgoing
+transaction. A crash/restart before that point would permanently lose the
+private key (and any funds already received at that address), silently.
+**Fixed**: extracted `CWallet::PersistXMSSState()`, now called both from
+`CommitTransaction()` and immediately after key generation in
+`getnewxmssaddress`. **Verified via actual crash test**: generated a key,
+sent zero transactions, `SIGKILL`'d the node, restarted, confirmed the key
+and `ismine:true` survived. This fix is committed and pushed
+(`d61ae76`) — it stands regardless of how the spending design below
+ultimately gets resolved.
+
+**5. Investigated exactly what consensus requires to spend a P2XMSS output**,
+to design the manual transaction builder correctly:
+- `OP_XMSS_CHECKSIG`'s `CheckXMSSSignature()` (interpreter.cpp ~line 1735)
+  computes a completely standard `SignatureHash(scriptCode, *txTo, nIn,
+  SIGHASH_ALL, amount, sigversion, nullptr)` — i.e. the ordinary
+  legacy/BIP143 sighash, nothing custom. Good news: no novel sighash scheme
+  needed.
+- `CScript::IsWitnessProgram()` is **completely unmodified** from upstream.
+  The P2XMSS script (`<64-byte-pubkey-push> OP_XMSS_CHECKSIG`, 66 bytes) is
+  far larger than the 42-byte max for witness programs and doesn't start
+  with `OP_0`/`OP_1`-`OP_16`. **A P2XMSS output is therefore never treated
+  as a witness program by consensus — it can only be spent via legacy
+  scriptSig (`SigVersion::BASE`)**, pushing just the signature (the pubkey
+  is already embedded in the locking script, so scriptSig only needs `<sig>`,
+  similar to bare P2PK).
+
+### THE ACTUAL BLOCKER (found last, and the reason nothing can move forward
+### without a deliberate decision)
+
+XMSS signatures are ~2500 bytes. Checked the standardness/relay policy
+limits in `policy/policy.h` (confirmed **unmodified** from upstream):
+```
+MAX_STANDARD_SCRIPTSIG_SIZE        = 1650   bytes  (policy.cpp line ~121)
+MAX_STANDARD_P2WSH_STACK_ITEM_SIZE = 80     bytes  (policy.h line 43)
+MAX_STANDARD_P2WSH_SCRIPT_SIZE     = 3600   bytes  (policy.h line 47, fine on its own)
+```
+**A 2500-byte signature does not fit through either path.** Neither bare
+scriptSig (consensus-mandated path per the IsWitnessProgram finding above,
+1650-byte policy cap) nor a hypothetical P2WSH-wrapped redesign (80-byte
+policy cap on witness stack items, nowhere close) can carry it under
+default relay policy. `AcceptToMemoryPool` would reject any transaction
+attempting to spend a P2XMSS output before it could ever reach a block —
+this would block it from our own node's mempool too, not just P2P relay.
+
+**This is why PoUW mining signatures never hit this wall**: they're carried
+in a coinbase `OP_RETURN` output (Phase 6.9's preimage redesign), which is
+not subject to scriptSig/witness-stack size policy at all. Spending-side
+signatures, going through actual script execution via `OP_XMSS_CHECKSIG`,
+have no equivalent escape hatch today.
+
+### What fixing this actually requires (not started — this is the next session's first task)
+
+A deliberate policy decision, most likely one of:
+- (a) Raise `MAX_STANDARD_SCRIPTSIG_SIZE` specifically for transactions
+  whose input's previous output is a recognized P2XMSS script (narrow,
+  type-gated exception rather than a blanket policy change — safer, smaller
+  DoS surface), **or**
+- (b) Redesign P2XMSS spending to use a witness-based scheme and raise
+  `MAX_STANDARD_P2WSH_STACK_ITEM_SIZE` (or design a bespoke witness
+  program type for XMSS, recognized by a modified `IsWitnessProgram()`,
+  so it gets `SigVersion::WITNESS_V0` treatment) — this is more invasive
+  (touches consensus-level witness-program recognition) but is more
+  consistent with how the project already solved the identical problem
+  for mining (move large data out of size-constrained legacy paths into
+  a purpose-built carve-out).
+
+Either path has real DoS-surface tradeoffs (larger standard transaction
+sizes = more relay bandwidth and validation cost network-wide) that
+deserve careful, undistracted thought — explicitly NOT a decision to make
+at the tail end of an exhausting session, which is why this was stopped
+here rather than pushed through.
+
+### Design Decision Record — Swept One-Time XMSS Address Model (18/Jun/2026)
+
+Decided, not yet implemented:
+- Each XMSS address is swept and retired in a single spend — one signature
+  (always index 0) authorizes spending the address's *entire* balance
+  (all UTXOs at that address) in one transaction. Partial spends from an
+  address are not allowed; the wallet must always sweep fully.
+- After a sweep, the key is marked permanently retired (persisted
+  synchronously, before broadcast) and the wallet must refuse to ever sign
+  with it again, regardless of future deposits to that address.
+- Change goes to a freshly generated XMSS address automatically (chosen by
+  the user this session, for consistency with the project's "everything
+  post-quantum" positioning).
+- If a single payment exceeds any one address's balance, the wallet may
+  automatically combine multiple one-time XMSS addresses' UTXOs into a
+  single transaction (chosen by the user this session, for usability) —
+  each input still signed independently by its own key, each of those keys
+  then independently retired.
+- This sidesteps needing any HD-derivation scheme for XMSS (no `CPubKey`
+  compatibility needed for key derivation) and structurally avoids ever
+  reaching the broken index-1023 reference-library bug (Phase 6.8 finding),
+  since no key's index ever advances past 0.
+- UTXO discovery approach settled on for the eventual manual transaction
+  builder (since `IsMine()`/`listunspent` don't recognize P2XMSS under the
+  current descriptor-only wallet backend): scan `pwallet->mapWallet` for
+  outputs matching the P2XMSS script pattern with the target pubkey,
+  filtered by `GetTxDepthInMainChain() >= 1` (confirmed) and
+  `!pwallet->IsSpent(outpoint)`. Final broadcast should reuse
+  `pwallet->CommitTransaction()` for recording + relay (already verified
+  safe and now correctly persists XMSS state per the Phase 6.11 fix),
+  bypassing only `CreateTransaction`'s coin selection and the standard
+  ECDSA-oriented signing path — NOT yet implemented, blocked on the policy
+  size-limit decision above.
+
+### Concrete next-session starting point
+1. Make the policy decision (scriptSig exception vs. witness redesign) —
+   read this whole section first, then decide.
+2. Implement the chosen policy change in `policy/policy.cpp`/`policy.h`
+   (and `script/interpreter.cpp`'s witness-program detection if option (b)).
+3. Implement the manual transaction builder for `sendfromxmssaddress`
+   per the Design Decision Record above (UTXO discovery via mapWallet scan
+   already designed, just needs writing + testing).
+4. Test: full round trip — generate address, receive funds, sweep-spend,
+   confirm key retired, confirm wallet refuses second use.
