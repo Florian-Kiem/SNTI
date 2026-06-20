@@ -31,6 +31,13 @@ status terkini — selalu cek file ini dulu.
 
 ---
 
+## 1.6 Testnet legacy-block scan [20 Jun]
+
+Scan semua 207 blok testnet (`qnt-node.service`) buat pola corrupt yang
+sama kayak regtest. **Hasil: BERSIH.** Semua slot pubkey OP_RETURN
+persis 66 byte. Testnet aman dari bug ini — confirmed dimulai setelah
+fix BIP141 17 Jun.
+
 ## 1.5 MULTI-NODE SYNC — FULLY VERIFIED [20 Jun, final]
 
 Fix `CheckPoUW()` (commit lihat git log) + chain regtest baru dari nol +
