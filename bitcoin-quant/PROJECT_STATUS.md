@@ -31,6 +31,15 @@ status terkini — selalu cek file ini dulu.
 
 ---
 
+## 1.5 MULTI-NODE SYNC — FULLY VERIFIED [20 Jun, final]
+
+Fix `CheckPoUW()` (commit lihat git log) + chain regtest baru dari nol +
+binary terpatch penuh. Hasil: node kedua sync 110/110 blok dari genesis,
+TERMASUK blok berisi transaksi `sendfromxmssaddress` asli (bukan cuma
+coinbase). Tip hash node 1 dan node 2 identik persis. Ini penutup
+investigasi multi-node yang dimulai gap #4 lalu berkembang jadi
+penemuan bug konsensus nyata.
+
 ## 2. TERVERIFIKASI LANGSUNG hari ini (bukti konkret, bukan klaim file lama)
 
 - ✅ `OP_XMSS_CHECKSIG` benar-benar verifikasi matematis di consensus layer (`interpreter.cpp`, bukan stub)
