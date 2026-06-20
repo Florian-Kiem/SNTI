@@ -1883,9 +1883,14 @@ AC_CONFIG_LINKS([test/functional/test_runner.py:test/functional/test_runner.py])
 AC_CONFIG_LINKS([test/fuzz/test_runner.py:test/fuzz/test_runner.py])
 AC_CONFIG_LINKS([test/util/test_runner.py:test/util/test_runner.py])
 AC_CONFIG_LINKS([test/util/rpcauth-test.py:test/util/rpcauth-test.py])
-AC_CONFIG_LINKS([src/qt/Makefile:src/qt/Makefile])
-AC_CONFIG_LINKS([src/qt/test/Makefile:src/qt/test/Makefile])
-AC_CONFIG_LINKS([src/test/Makefile:src/test/Makefile])
+dnl QNT FIX (20/Jun/2026): removed bogus self-referencing AC_CONFIG_LINKS for
+dnl src/qt/Makefile, src/qt/test/Makefile, src/test/Makefile -- these .am
+dnl source files don't exist in this fork (GUI/tests stripped), the links
+dnl pointed a file to itself (nonsensical), weren't guarded by ENABLE_QT,
+dnl and src/Makefile.am has no SUBDIRS recursion into qt/test anyway (Qt is
+dnl built via 'include Makefile.qt.include' directly). This broke autogen.sh
+dnl on any fresh checkout (discovered when testing a build on a second,
+dnl independent machine).
 
 dnl boost's m4 checks do something really nasty: they export these vars. As a
 dnl result, they leak into secp256k1's configure and crazy things happen.
