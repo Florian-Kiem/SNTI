@@ -170,6 +170,15 @@ bool CXMSSSigner::SignXMSS(const uint256& hash, const std::vector<uint8_t>& pubk
     auto it = xmss_keys.find(pubkey);
     if (it == xmss_keys.end()) return false;
 
+    // QNT FIX (gap #3, 20/Jun/2026): refuse a second sign with the same
+    // key. Every XMSS address is one-time-use by design here -- reusing a
+    // leaf index lets an attacker reconstruct the private key from two
+    // signatures, so this is a hard block, not just leaf_index bookkeeping.
+    if (it->second.retired) {
+        LogPrintf("QNT: SignXMSS refused -- key is retired (one-time XMSS address already used)\n");
+        return false;
+    }
+
     // Convert uint256 to vector
     std::vector<uint8_t> hash_vec(hash.begin(), hash.end());
 
@@ -181,9 +190,18 @@ bool CXMSSSigner::SignXMSS(const uint256& hash, const std::vector<uint8_t>& pubk
 
     if (success) {
         const_cast<uint32_t&>(it->second.leaf_index)++;
+        const_cast<bool&>(it->second.retired) = true;
     }
 
     return success;
+}
+
+bool CXMSSSigner::IsXMSSKeyRetired(const std::vector<uint8_t>& pubkey) const
+{
+    LOCK(cs_xmss_signer);
+    auto it = xmss_keys.find(pubkey);
+    if (it == xmss_keys.end()) return false;
+    return it->second.retired;
 }
 
 bool CXMSSSigner::HaveXMSSKey(const std::vector<uint8_t>& pubkey) const
@@ -208,9 +226,18 @@ std::vector<uint8_t> CXMSSSigner::SaveState() const
 {
     LOCK(cs_xmss_signer);
 
-    // Format: [count(4)] [key_entry_1] [key_entry_2] ...
-    // Each key_entry: [pubkey_size(4)] [pubkey(64)] [index(4)] [sk_size(4)] [sk_data]
+    // QNT FIX (gap #3, 20/Jun/2026): format bumped to v2 to add a
+    // per-key "retired" byte (one-time-address enforcement). Magic
+    // prefix lets LoadState() distinguish v2 blobs from old v1 blobs
+    // that have no retired field, so existing wallet DBs keep loading.
+    // Format: ['Q','N','T','2'] [count(4)] [key_entry_1] ...
+    // Each key_entry: [pubkey_size(4)] [pubkey(64)] [index(4)] [retired(1)] [sk_size(4)] [sk_data]
     std::vector<uint8_t> data;
+
+    data.push_back('Q');
+    data.push_back('N');
+    data.push_back('T');
+    data.push_back('2');
 
     // Count
     uint32_t count = (uint32_t)xmss_keys.size();
@@ -234,6 +261,9 @@ std::vector<uint8_t> CXMSSSigner::SaveState() const
         data.push_back((entry.leaf_index >> 8) & 0xFF);
         data.push_back(entry.leaf_index & 0xFF);
 
+        // Retired flag (QNT gap #3)
+        data.push_back(entry.retired ? 1 : 0);
+
         // Secret key via CXMSSKey::GetPrivKey()
         std::vector<uint8_t> sk = entry.key.GetPrivKey();
         uint32_t sk_size = (uint32_t)sk.size();
@@ -244,7 +274,7 @@ std::vector<uint8_t> CXMSSSigner::SaveState() const
         data.insert(data.end(), sk.begin(), sk.end());
     }
 
-    LogPrint(BCLog::WALLETDB, "CXMSSSigner::SaveState: saved %u keys (%u bytes)\n",
+    LogPrint(BCLog::WALLETDB, "CXMSSSigner::SaveState: saved %u keys (%u bytes, v2/retired-aware)\n",
              count, (uint32_t)data.size());
 
     return data;
@@ -260,7 +290,18 @@ bool CXMSSSigner::LoadState(const std::vector<uint8_t>& data)
     xmss_keys.clear();
     key_id_map.clear();
 
+    // QNT FIX (gap #3, 20/Jun/2026): detect v2 format (magic "QNT2"
+    // prefix, adds a per-key retired byte). Falls back to v1 parsing
+    // (no retired field, defaults to not-retired) for blobs saved before
+    // this change, so existing wallet DBs keep loading without a wipe.
     size_t pos = 0;
+    bool is_v2 = (data.size() >= 8 &&
+                  data[0] == 'Q' && data[1] == 'N' && data[2] == 'T' && data[3] == '2');
+    if (is_v2) {
+        pos = 4;
+    }
+
+    if (pos + 4 > data.size()) return false;
     uint32_t count = ((uint32_t)data[pos] << 24) | ((uint32_t)data[pos+1] << 16) |
                      ((uint32_t)data[pos+2] << 8) | (uint32_t)data[pos+3];
     pos += 4;
@@ -282,6 +323,14 @@ bool CXMSSSigner::LoadState(const std::vector<uint8_t>& data)
                               ((uint32_t)data[pos+2] << 8) | (uint32_t)data[pos+3];
         pos += 4;
 
+        // Retired flag (only present in v2 blobs; v1 keys default to false)
+        bool retired = false;
+        if (is_v2) {
+            if (pos + 1 > data.size()) return false;
+            retired = (data[pos] != 0);
+            pos += 1;
+        }
+
         // Secret key
         if (pos + 4 > data.size()) return false;
         uint32_t sk_size = ((uint32_t)data[pos] << 24) | ((uint32_t)data[pos+1] << 16) |
@@ -295,6 +344,7 @@ bool CXMSSSigner::LoadState(const std::vector<uint8_t>& data)
         XMSSKeyEntry entry;
         entry.pubkey = pubkey;
         entry.leaf_index = leaf_index;
+        entry.retired = retired;
         if (!entry.key.Load(sk)) {
             LogPrintf("CXMSSSigner::LoadState: failed to load key %u\n", i);
             return false;
@@ -305,7 +355,8 @@ bool CXMSSSigner::LoadState(const std::vector<uint8_t>& data)
         xmss_keys[pubkey] = std::move(entry);
     }
 
-    LogPrint(BCLog::WALLETDB, "CXMSSSigner::LoadState: loaded %u keys\n", count);
+    LogPrint(BCLog::WALLETDB, "CXMSSSigner::LoadState: loaded %u keys (%s format)\n",
+             count, is_v2 ? "v2/retired-aware" : "v1/legacy");
     return true;
 }
 

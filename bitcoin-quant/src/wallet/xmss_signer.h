@@ -117,6 +117,10 @@ public:
     // Check if any key is near exhaustion (< 10% remaining)
     bool HasExhaustedKeys() const;
 
+    // QNT (gap #3): check if a key has already signed once and is
+    // therefore permanently retired (one-time-address enforcement).
+    bool IsXMSSKeyRetired(const std::vector<uint8_t>& pubkey) const;
+
     // QNT: Get pubkey by address hash (uint160 / CKeyID)
     std::vector<uint8_t> GetPubKeyForHash(const uint160& addr_hash) const;
 
@@ -136,6 +140,11 @@ private:
         std::vector<uint8_t> pubkey;  // 64-byte pubkey (root || PUB_SEED)
         std::string label;
         uint32_t leaf_index{0};
+        // QNT (gap #3): true once this key has signed -- every XMSS
+        // address is treated as one-time-use ("swept" address), so a
+        // retired key must never be allowed to sign again even if leaf
+        // indices remain technically available.
+        bool retired{false};
 
         XMSSKeyEntry() = default;
         XMSSKeyEntry(XMSSKeyEntry&&) = default;
