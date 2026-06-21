@@ -45,6 +45,20 @@ Blok `1254f0a0...` berhasil PROPAGASI ke node resmi VPS dan DITERIMA
 end-to-end lengkap: node eksternal bisa sync DAN aktif menambang DAN
 blok-nya diterima jaringan.
 
+## 1.7b MILESTONE: Assentian-PQE testnet service LIVE [21 Jun]
+
+`assentian-node.service` (systemd) resmi jalan di lokasi baru
+(`/root/Assentian-PQE/SNTI`), datadir terpisah (`/root/.assentian_testnet`),
+port baru (RPC 39332, P2P 39333 - sengaja beda dari port lama biar nggak
+bentrok). Genesis terverifikasi: `2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d`.
+
+Repo lama (`bitcoin-quant`, folder `/root/quant/bitcoin-quant`) dan
+servis lama (`qnt-node.service`) dibiarkan MATI sebagai arsip - tidak
+dihapus, tapi tidak lagi jadi acuan aktif.
+
+**Belum dikerjakan**: reconnect node eksternal (VM) ke testnet baru ini
+(perlu wipe data lama di VM dulu, chain lama sudah obsolete).
+
 ## 1.7a MILESTONE: Rebrand to Assentian-PQE / SNTI [21 Jun]
 
 QNT bentrok dengan Quant Network (ticker mapan, ~$1 miliar market cap) -
