@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <arith_uint256.h>
 #include <kernel/chainparams.h>
 
 #include <qnt_seeds.h>
@@ -50,7 +51,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 // Genesis output uses P2PK-like script with 64-byte XMSS public key
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-    const char* pszTimestamp = "QNT Genesis 15/Jun/2026 - NIST SP 800-208 XMSS - Quantum Era Begins";
+    const char* pszTimestamp = "Assentian-PQE Genesis 21/Jun/2026 - NIST SP 800-208 XMSS - Post Quantum Era Begins";
     // QNT Genesis XMSS public key (64 bytes root||PUB_SEED)
     // Generated: 2026-06-11
     // Algorithm: XMSS-SHA2_10_256 (NIST SP 800-208)
@@ -128,10 +129,10 @@ public:
         consensus.nPoUWMaxSigSize = 4096;
 
         // Quant magic bytes: "QUAN" = 0x5155414E
-        pchMessageStart[0] = 0x51;
-        pchMessageStart[1] = 0x55;
-        pchMessageStart[2] = 0x41;
-        pchMessageStart[3] = 0x4e;
+        pchMessageStart[0] = 0x53;
+        pchMessageStart[1] = 0x4E;
+        pchMessageStart[2] = 0x54;
+        pchMessageStart[3] = 0x49;
         // P2P Port: 9333
         nDefaultPort = 9333;
         nPruneAfterHeight = 100000;
@@ -225,7 +226,7 @@ public:
         consensus.nPoUWMaxSigSize = 4096;
 
         // Testnet magic: "qTST" = 0x71545354
-        pchMessageStart[0] = 0x71;
+        pchMessageStart[0] = 0x73;
         pchMessageStart[1] = 0x54;
         pchMessageStart[2] = 0x53;
         pchMessageStart[3] = 0x54;
@@ -234,8 +235,16 @@ public:
         m_assumed_blockchain_size = 10;
         m_assumed_chain_state_size = 2;
 
-        genesis = CreateGenesisBlock(1781545300, 0, 0x207fffff, 1, 50 * COIN);
-        consensus.hashGenesisBlock = uint256S("743c2849738436a7c96451e5bbe51be98fb676fde212abf56c9d7a7a727f1efc");
+        genesis = CreateGenesisBlock(1782026818, 1, 0x207fffff, 1, 50 * COIN);
+        // TEMP-GENESIS-SEARCH: hapus setelah dapat nonce valid
+        {
+            arith_uint256 hashTarget = arith_uint256().SetCompact(genesis.nBits);
+            while (UintToArith256(genesis.GetHash()) > hashTarget) {
+                ++genesis.nNonce;
+            }
+            LogPrintf("QNT-GENESIS-FOUND: nNonce=%u hash=%s\n", genesis.nNonce, genesis.GetHash().ToString());
+        }
+        consensus.hashGenesisBlock = uint256S("2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d");
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -405,7 +414,7 @@ public:
         consensus.defaultAssumeValid = uint256{};
 
         // Regtest magic: "qREG" = 0x71524547
-        pchMessageStart[0] = 0x71;
+        pchMessageStart[0] = 0x73;
         pchMessageStart[1] = 0x52;
         pchMessageStart[2] = 0x45;
         pchMessageStart[3] = 0x47;
@@ -440,8 +449,8 @@ public:
             consensus.vDeployments[deployment_pos].min_activation_height = version_bits_params.min_activation_height;
         }
 
-        genesis = CreateGenesisBlock(1781545300, 0, 0x207fffff, 1, 50 * COIN);
-        consensus.hashGenesisBlock = uint256S("743c2849738436a7c96451e5bbe51be98fb676fde212abf56c9d7a7a727f1efc");
+        genesis = CreateGenesisBlock(1782026818, 1, 0x207fffff, 1, 50 * COIN);
+        consensus.hashGenesisBlock = uint256S("2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d");
 
         // QNT: PoUW — enable on all Quant chains from genesis
         consensus.fPoUW = true;
