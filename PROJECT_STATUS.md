@@ -171,3 +171,22 @@ penemuan bug konsensus nyata.
 **Rebrand selesai**: semua file publik (HTML, MD, whitepaper) sudah bersih dari "QNT".
 LICENSE & SECURITY.md updated ke Assentian-PQE / Asep Mulya / assentianpqe@gmail.com.
 
+
+## MILESTONE: Wave 1 CPU Mining Stack COMPLETE [22 Jun 2026]
+
+cpuminer-multi dari VM terpisah (internet asli) berhasil connect ke
+stratum server Assentian-PQE dan mining blok beneran:
+
+- **18/18 shares accepted** (0 rejected)
+- **6 blok baru ditambang** via stratum dalam hitungan menit
+- **Hashrate**: ~16 MH/s dari 2 CPU thread
+- **Kompatibel** dengan cpuminer-multi 1.3.7 (software CPU mining terpopuler)
+
+Connect info:
+- Stratum: `stratum+tcp://104.234.26.7:3333`
+- Algorithm: `sha256d`
+- Stats: `http://104.234.26.7:3334/`
+
+Wave 1 (CPU mining) sekarang PRODUCTION-READY di testnet.
+Wave 2 (GPU + proper submitblock) dalam roadmap.
+
