@@ -833,8 +833,8 @@ async function showTx(txid) {
             <div class="detail-label">Weight</div><div class="detail-value">${escHtml(String(d.weight??'—'))} WU</div>
             <div class="detail-label">Version</div><div class="detail-value">${escHtml(String(d.version??'—'))}</div>
             <div class="detail-label">Locktime</div><div class="detail-value">${escHtml(String(d.locktime??'—'))}</div>
-            <div class="detail-label">Fee</div><div class="detail-value">${d.fee !== null && d.fee !== undefined ? d.fee.toFixed(8) + ' QNT' : '—'}</div>
-            <div class="detail-label">Total Input</div><div class="detail-value">${d.total_in !== null && d.total_in !== undefined ? d.total_in.toFixed(8) + ' QNT' : '—'}</div>
+            <div class="detail-label">Fee</div><div class="detail-value">${d.fee !== null && d.fee !== undefined ? d.fee.toFixed(8) + ' SNTI' : '—'}</div>
+            <div class="detail-label">Total Input</div><div class="detail-value">${d.total_in !== null && d.total_in !== undefined ? d.total_in.toFixed(8) + ' SNTI' : '—'}</div>
             <div class="detail-label">Total Output</div><div class="detail-value">${(d.total_out||0).toFixed(8)} SNTI</div>
           </div>
         </div>

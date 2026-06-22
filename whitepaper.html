@@ -389,13 +389,13 @@ Assentian-PQE (SNTI) Mining:
 <p><strong>1. Proof-of-Useful-Work (PoUW)</strong>
 No other project uses XMSS key generation as consensus work. SNTI mining produces real cryptographic material — XMSS key pairs that secure the network.</p>
 <p><strong>2. Bitcoin Core Fork with XMSS</strong>
-QNT inherits Bitcoin's 15+ years of security hardening, UTXO model, SegWit, and battle-tested codebase — with XMSS replacing ECDSA at the cryptographic layer.</p>
+Assentian-PQE (SNTI) inherits Bitcoin's 15+ years of security hardening, UTXO model, SegWit, and battle-tested codebase — with XMSS replacing ECDSA at the cryptographic layer.</p>
 <p><strong>3. Mineable + Quantum-Resistant</strong>
 QRL proved XMSS works in blockchain but chose PoS. SNTI proves you can have BOTH mining AND quantum resistance.</p>
 <p><strong>4. Full Ecosystem Vision</strong>
-QNT is not just "quantum Bitcoin." The roadmap includes DeFi, atomic swaps, payment channels, and governance — a complete post-quantum financial infrastructure.</p>
+Assentian-PQE (SNTI) is not just "quantum Bitcoin." The roadmap includes DeFi, atomic swaps, payment channels, and governance — a complete post-quantum financial infrastructure.</p>
 <h3>4.5 Acknowledgments</h3>
-<p>QNT builds on the work of:
+<p>Assentian-PQE (SNTI) builds on the work of:
 - <strong>QRL team</strong> — proved XMSS in blockchain (2018)
 - <strong>Bitcoin Core developers</strong> — the foundation we fork from
 - <strong>NIST PQC team</strong> — XMSS standardization (SP 800-208)
@@ -416,7 +416,7 @@ QNT is not just "quantum Bitcoin." The roadmap includes DeFi, atomic swaps, paym
 │       ▼                               ▼                 │
 │  ┌──────────┐                  ┌──────────┐            │
 │  │ XMSS Key │                  │  Wallet  │            │
-│  │ Gen + Sig│                  │ (QNT App)│            │
+│  │ Gen + Sig│                  │ (SNTI App)│            │
 │  └──────────┘                  └──────────┘            │
 │                                                         │
 │  ┌──────────────────────────────────────────────┐      │
@@ -452,7 +452,7 @@ QNT is not just "quantum Bitcoin." The roadmap includes DeFi, atomic swaps, paym
 └─────────────────────────────────────┘
 </code></pre>
 <h3>5.3 Address Format</h3>
-<p>QNT addresses encode an <strong>XMSS public key hash</strong>, making them inherently quantum-resistant:</p>
+<p>Assentian-PQE (SNTI) addresses encode an <strong>XMSS public key hash</strong>, making them inherently quantum-resistant:</p>
 <pre><code>Address: qnt1q7s2k9m3x8v5n2p4r6t8w1y3z5a7b9c2d4e6f8g0h
 
 Breakdown:
@@ -463,11 +463,11 @@ Breakdown:
 <hr />
 <h2>6. Mining &amp; Consensus</h2>
 <h3>6.1 Proof-of-Useful-Work (PoUW)</h3>
-<p>QNT replaces hash-based difficulty with <strong>XMSS computational difficulty</strong>:</p>
+<p>Assentian-PQE (SNTI) replaces hash-based difficulty with <strong>XMSS computational difficulty</strong>:</p>
 <pre><code>Traditional PoW:
   Find nonce such that SHA256(block || nonce) &lt; target
 
-QNT PoUW:
+Assentian-PQE (SNTI) PoUW:
   1. Generate XMSS key pair (one-time, per miner)
   2. Sign block header with XMSS private key
   3. Submit block + signature + public key
@@ -535,10 +535,10 @@ QNT PoUW:
 </table>
 <h3>6.4 Mining Rewards</h3>
 <pre><code>Block Reward Schedule:
-  Genesis ──────── 50 QNT/block ────────┐
-  210k blocks ─── 25 QNT/block ────────┤ Halving 1
-  420k blocks ─── 12.5 QNT/block ──────┤ Halving 2
-  630k blocks ─── 6.25 QNT/block ──────┤ Halving 3
+  Genesis ──────── 50 SNTI/block ────────┐
+  210k blocks ─── 25 SNTI/block ────────┤ Halving 1
+  420k blocks ─── 12.5 SNTI/block ──────┤ Halving 2
+  630k blocks ─── 6.25 SNTI/block ──────┤ Halving 3
   ...continues until 21M total supply──┘
 
 Total Supply: 21,000,000 SNTI (capped)
