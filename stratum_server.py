@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
 """
-QNT Stratum Mining Proxy
-========================
-Lightweight stratum-to-RPC proxy for SNTI (Bitcoin Core fork).
-Connects to bitcoind via JSON-RPC, serves miners via Stratum protocol.
+Assentian-PQE (SNTI) Stratum Mining Server
+===========================================
+Stratum-to-RPC proxy for SNTI testnet (Wave 1: CPU mining).
 
-Supports:
-- Multiple simultaneous miner connections
-- Share tracking (accepted/rejected)
-- Difficulty adjustment
-- Block template caching
-- XMSS-aware block template handling (PoUW-minable blocks forwarded to bitcoind generate)
+Architecture notes:
+  XMSS signing is performed INSIDE bitcoind (not externally constructable).
+  Therefore this server uses a hybrid approach:
+  - Send simplified SHA-256 proof-of-work jobs to miners
+  - When a miner finds a valid share, trigger bitcoind's generatetoaddress
+    (which handles XMSS keygen + signing + PoUW internally)
+  - Mining reward goes to server's pool address
+  
+  This is intentional for Wave 1 (CPU testnet). A full getwork/submitblock
+  flow requires exposing XMSS signing at RPC level (planned for Wave 2).
 
 Usage:
-    python3 stratum_server.py [--port 3333] [--rpc-port 29332] [--rpc-user user] [--rpc-pass password]
+    python3 stratum_server.py [options]
+
+Options:
+    --port        Stratum port (default: 3333)
+    --rpc-port    bitcoind RPC port (default: 39332)
+    --rpc-host    bitcoind RPC host (default: 127.0.0.1)
+    --rpc-user    RPC username (default: user)
+    --rpc-pass    RPC password (default: password)
+    --address     Pool reward address (auto-generated if not set)
+    --shares-per-block  Shares required before mining attempt (default: 5)
 """
 
 import asyncio
@@ -26,19 +38,26 @@ import logging
 import argparse
 import os
 import sys
+import threading
 from decimal import Decimal
 
 # ---------------------------------------------------------------------------
 # Configuration defaults
 # ---------------------------------------------------------------------------
 DEFAULT_PORT = 3333
-DEFAULT_RPC_PORT = 29332
+DEFAULT_RPC_PORT = 39332
 DEFAULT_RPC_USER = "user"
 DEFAULT_RPC_PASS = "password"
 DEFAULT_RPC_HOST = "127.0.0.1"
 DEFAULT_MINER_ADDRESS = ""
-DIFFICULTY_SHARE_TARGET = 0x00007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-BLOCK_TEMPLATE_INTERVAL = 15  # seconds
+DEFAULT_SHARES_PER_BLOCK = 5
+
+# Share difficulty target (adjust for CPU mining speed)
+# This is very easy - any CPU can find shares quickly
+SHARE_DIFFICULTY = 1
+SHARE_TARGET = 0x00007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+
+BLOCK_TEMPLATE_INTERVAL = 30  # seconds
 STATS_INTERVAL = 60  # seconds
 
 logging.basicConfig(
@@ -46,211 +65,286 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-log = logging.getLogger("stratum")
+log = logging.getLogger("snti-stratum")
 
 # ---------------------------------------------------------------------------
 # Bitcoin RPC helper
 # ---------------------------------------------------------------------------
 try:
-    from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+    import requests
 except ImportError:
-    log.error("python-bitcoinrpc not installed. Run: pip3 install python-bitcoinrpc")
+    log.error("requests not installed. Run: pip3 install requests")
     sys.exit(1)
 
 
 class BitcoinRPC:
     def __init__(self, host, port, user, password):
-        self.url = f"http://{user}:{password}@{host}:{port}"
-        self._proxy = AuthServiceProxy(self.url)
-        self._proxy_internal = AuthServiceProxy(self.url)
+        self.url = f"http://{host}:{port}"
+        self.auth = (user, password)
+        self.id = 0
 
-    def get_block_template(self):
+    def call(self, method, params=None):
+        self.id += 1
+        payload = {
+            "jsonrpc": "1.0",
+            "id": self.id,
+            "method": method,
+            "params": params or [],
+        }
         try:
-            return self._proxy.getblocktemplate({"rules": ["segwit"]})
-        except JSONRPCException as e:
-            log.warning(f"getblocktemplate failed: {e}")
+            resp = requests.post(
+                self.url,
+                json=payload,
+                auth=self.auth,
+                timeout=30,
+            )
+            data = resp.json()
+            if data.get("error"):
+                log.error(f"RPC error ({method}): {data['error']}")
+                return None
+            return data.get("result")
+        except Exception as e:
+            log.error(f"RPC call failed ({method}): {e}")
             return None
 
-    def submit_block(self, block_hex):
-        try:
-            return self._proxy.submitblock(block_hex)
-        except JSONRPCException as e:
-            log.warning(f"submitblock failed: {e}")
-            return str(e)
+    def get_block_template(self):
+        return self.call("getblocktemplate", [{"rules": ["segwit"]}])
 
     def get_blockchain_info(self):
-        try:
-            return self._proxy.getblockchaininfo()
-        except JSONRPCException:
-            return {}
+        return self.call("getblockchaininfo")
 
     def get_mining_info(self):
-        try:
-            return self._proxy.getmininginfo()
-        except JSONRPCException:
-            return {}
+        return self.call("getmininginfo")
 
-    def get_new_address(self):
+    def get_new_address(self, wallet="snti_pool"):
+        # Must use wallet-specific RPC path
+        self.id += 1
+        payload = {
+            "jsonrpc": "1.0",
+            "id": self.id,
+            "method": "getnewaddress",
+            "params": [],
+        }
         try:
-            return self._proxy.getnewaddress("", "legacy")
-        except JSONRPCException:
-            return ""
+            resp = requests.post(
+                f"{self.url}/wallet/{wallet}",
+                json=payload,
+                auth=self.auth,
+                timeout=10,
+            )
+            data = resp.json()
+            if data.get("error"):
+                return None
+            return data.get("result")
+        except Exception as e:
+            log.error(f"get_new_address failed: {e}")
+            return None
 
     def get_block_count(self):
-        try:
-            return self._proxy.getblockcount()
-        except JSONRPCException:
-            return 0
+        return self.call("getblockcount")
 
     def generate_to_address(self, n_blocks, address):
-        """For regtest/solo mining fallback."""
+        """Mine n_blocks to address. This triggers full PoUW (XMSS) internally."""
+        return self.call("generatetoaddress", [n_blocks, address])
+
+    def create_wallet(self, name):
+        """Create wallet, ignore error if already exists."""
+        self.id += 1
+        payload = {"jsonrpc": "1.0", "id": self.id, "method": "createwallet", "params": [name]}
         try:
-            return self._proxy.generatetoaddress(n_blocks, address)
-        except JSONRPCException as e:
-            log.warning(f"generatetoaddress failed: {e}")
-            return []
+            resp = requests.post(self.url, json=payload, auth=self.auth, timeout=10)
+            data = resp.json()
+            # Ignore "already exists" error
+            if data.get("error") and "already exists" not in str(data["error"]):
+                log.warning(f"createwallet: {data['error']}")
+        except Exception as e:
+            log.debug(f"createwallet: {e}")
+
+
+# ---------------------------------------------------------------------------
+# Job tracking
+# ---------------------------------------------------------------------------
+class Job:
+    def __init__(self, job_id, prev_hash, version, bits, curtime, height):
+        self.job_id = job_id
+        self.prev_hash = prev_hash
+        self.version = version
+        self.bits = bits
+        self.curtime = curtime
+        self.height = height
+        self.created_at = time.time()
+
+    def to_notify_params(self, clean_jobs=False):
+        """Return params for mining.notify message."""
+        # Coinbase placeholder (miner doesn't need real coinbase for simplified flow)
+        coinbase1 = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff"
+        coinbase2 = "ffffffff0100f2052a01000000434104"
+
+        return [
+            self.job_id,
+            self.prev_hash,
+            coinbase1,
+            coinbase2,
+            [],  # merkle branches (empty - simplified)
+            "{:08x}".format(self.version),
+            "{:08x}".format(self.bits),
+            "{:08x}".format(self.curtime),
+            clean_jobs,
+        ]
 
 
 # ---------------------------------------------------------------------------
 # Stratum Server
 # ---------------------------------------------------------------------------
 class StratumServer:
-    def __init__(self, rpc, port, miner_address=None):
+    def __init__(self, rpc, port, pool_address=None, shares_per_block=5):
         self.rpc = rpc
         self.port = port
-        self.miner_address = miner_address
-        self.workers = {}  # addr -> connection
+        self.pool_address = pool_address
+        self.shares_per_block = shares_per_block
+        self.active = True
+
+        # State
+        self.current_job = None
+        self.template_lock = asyncio.Lock()
+        self.last_template_update = 0
+        self.last_block_height = 0
+
+        # Stats
         self.total_shares = 0
         self.accepted = 0
         self.rejected = 0
         self.blocks_found = 0
-        self.conn_count = 0
+        self.workers = {}  # worker_id -> {total, accepted, rejected, last_share}
+        self.connected_workers = 0
         self.start_time = time.time()
-        self.current_template = None
-        self.template_lock = asyncio.Lock()
-        self.last_template_update = 0
-        self.worker_shares = {}  # addr -> {accepted, rejected, last_share}
-        self.active = True
 
-    # ----- template management -----
+    def _make_job_id(self):
+        return binascii.hexlify(os.urandom(4)).decode()
+
+    def _make_job_from_template(self, template, clean=False):
+        if not template:
+            return None, False
+        prev_hash = template.get("previousblockhash", "0" * 64)
+        version = template.get("version", 0x20000000)
+        bits = template.get("bits", "207fffff")
+        if isinstance(bits, str):
+            bits = int(bits, 16)
+        curtime = int(time.time())
+        height = template.get("height", 0)
+        job_id = self._make_job_id()
+        return Job(job_id, prev_hash, version, bits, curtime, height), clean
+
     async def update_template(self):
+        """Periodically fetch new block template."""
         while self.active:
             try:
                 await asyncio.sleep(BLOCK_TEMPLATE_INTERVAL)
                 template = self.rpc.get_block_template()
                 if template:
+                    height = template.get("height", 0)
+                    new_block = height != self.last_block_height
+                    if new_block:
+                        self.last_block_height = height
+                        log.info(f"New block height: {height} — sending new work to all miners")
                     async with self.template_lock:
-                        self.current_template = template
-                        self.last_template_update = time.time()
-                    # log.debug("Block template updated")
-                else:
-                    log.warning("No block template available")
+                        job, clean = self._make_job_from_template(template, clean=new_block)
+                        if job:
+                            self.current_job = job
             except Exception as e:
                 log.error(f"Template update error: {e}")
 
-    async def get_current_template(self):
+    async def get_current_job(self):
         async with self.template_lock:
-            if self.current_template is None:
-                self.current_template = self.rpc.get_block_template()
-                self.last_template_update = time.time()
-            return self.current_template
+            if self.current_job is None:
+                template = self.rpc.get_block_template()
+                if template:
+                    job, _ = self._make_job_from_template(template, clean=True)
+                    self.current_job = job
+                    self.last_block_height = template.get("height", 0)
+            return self.current_job
 
-    # ----- stats -----
-    def get_stats(self):
-        uptime = time.time() - self.start_time
-        return {
-            "stratum_active": True,
-            "port": self.port,
-            "connections": self.conn_count,
-            "workers": len(self.worker_shares),
-            "total_shares": self.total_shares,
-            "accepted": self.accepted,
-            "rejected": self.rejected,
-            "blocks_found": self.blocks_found,
-            "uptime_seconds": round(uptime, 1),
-            "uptime_human": self._human_duration(uptime),
-            "worker_list": [
-                {
-                    "name": k,
-                    "shares": v["total"],
-                    "accepted": v["accepted"],
-                    "rejected": v["rejected"],
-                    "last_share": v["last_share"],
-                }
-                for k, v in self.worker_shares.items()
-            ],
-        }
+    def _check_share(self, nonce_hex, job_id):
+        """
+        Validate share difficulty.
+        For Wave 1 (CPU testnet), we use a very easy target so CPU miners
+        can submit shares quickly. The actual PoW is done by generatetoaddress.
+        """
+        try:
+            nonce = int(nonce_hex, 16)
+        except (ValueError, TypeError):
+            return False
+
+        # Simple validation: double-SHA256 of nonce
+        # In a full implementation this would be double-SHA256 of block header
+        blob = struct.pack("<I", nonce)
+        h = hashlib.sha256(hashlib.sha256(blob).digest()).digest()
+        hash_int = int.from_bytes(h, "little")
+        return hash_int <= SHARE_TARGET
+
+    async def _try_mine_block(self, writer, worker_id):
+        """
+        Attempt to mine a block via bitcoind's generatetoaddress.
+        Called after N accepted shares from miners.
+        
+        Wave 1 limitation: reward goes to pool address, not individual miner.
+        Wave 2 will implement proper getwork/submitblock flow.
+        """
+        if self.accepted > 0 and self.accepted % self.shares_per_block == 0:
+            address = self.pool_address
+            if not address:
+                address = self.rpc.get_new_address()
+            if not address:
+                log.error("No pool address available for mining")
+                return
+
+            log.info(f"⛏ Mining attempt triggered (shares: {self.accepted}) → {address}")
+            loop = asyncio.get_event_loop()
+            try:
+                hashes = await loop.run_in_executor(
+                    None, lambda: self.rpc.generate_to_address(1, address)
+                )
+                if hashes and len(hashes) > 0:
+                    self.blocks_found += 1
+                    log.info(f"✅ Block found! Hash: {hashes[0]} (total blocks: {self.blocks_found})")
+                    # Invalidate current job — force new work
+                    async with self.template_lock:
+                        self.current_job = None
+                    # Send new work to this miner
+                    await self._send_work(writer, worker_id)
+                else:
+                    log.warning("generatetoaddress returned no hashes")
+            except Exception as e:
+                log.error(f"Mining attempt failed: {e}")
 
     @staticmethod
-    def _human_duration(seconds):
-        if seconds < 60:
-            return f"{seconds:.0f}s"
-        if seconds < 3600:
-            return f"{seconds / 60:.0f}m {seconds % 60:.0f}s"
-        return f"{seconds / 3600:.0f}h {(seconds % 3600) / 60:.0f}m"
-
-    # ----- client handling -----
-    async def handle_client(self, reader, writer):
-        addr = writer.get_extra_info("peername")
-        worker_id = f"{addr[0]}:{addr[1]}"
-        self.conn_count += 1
-        self.worker_shares[worker_id] = {"total": 0, "accepted": 0, "rejected": 0, "last_share": ""}
-        log.info(f"Miner connected: {worker_id} (total: {self.conn_count})")
-
+    async def _send(writer, msg):
+        data = json.dumps(msg) + "\n"
         try:
-            await self._serve_miner(reader, writer, worker_id)
-        except (ConnectionResetError, BrokenPipeError, asyncio.IncompleteReadError):
-            log.info(f"Miner disconnected: {worker_id}")
+            writer.write(data.encode())
+            await writer.drain()
         except Exception as e:
-            log.error(f"Client error {worker_id}: {e}")
-        finally:
-            self.conn_count -= 1
-            if worker_id in self.worker_shares:
-                del self.worker_shares[worker_id]
-            try:
-                writer.close()
-                await writer.wait_closed()
-            except Exception:
-                pass
+            log.debug(f"Send error: {e}")
 
-    async def _serve_miner(self, reader, writer, worker_id):
-        # 1. Send mining.subscribe
-        self._subscribe_id = "qnt-" + binascii.hexlify(os.urandom(8)).decode()
-        sub_msg = {
-            "id": None,
-            "method": "mining.notify",
-            "params": [self._subscribe_id],
-        }
-        await self._send(writer, sub_msg)
-
-        # 2. Send difficulty
-        diff_msg = {
+    async def _send_difficulty(self, writer):
+        msg = {
             "id": None,
             "method": "mining.set_difficulty",
-            "params": [str(int(DIFFICULTY_SHARE_TARGET))],
+            "params": [SHARE_DIFFICULTY],
         }
-        await self._send(writer, diff_msg)
+        await self._send(writer, msg)
 
-        # 3. Send initial work
-        await self._send_work(writer, worker_id)
-
-        # 4. Listen for submissions
-        buf = ""
-        while self.active:
-            data = await asyncio.wait_for(reader.read(4096), timeout=120)
-            if not data:
-                break
-            buf += data.decode("utf-8", errors="replace")
-            while "\n" in buf:
-                line, buf = buf.split("\n", 1)
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    msg = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                await self._handle_message(msg, writer, worker_id)
+    async def _send_work(self, writer, worker_id):
+        job = await self.get_current_job()
+        if not job:
+            log.warning(f"No job available for worker {worker_id}")
+            return
+        msg = {
+            "id": None,
+            "method": "mining.notify",
+            "params": job.to_notify_params(clean_jobs=True),
+        }
+        await self._send(writer, msg)
 
     async def _handle_message(self, msg, writer, worker_id):
         method = msg.get("method", "")
@@ -258,234 +352,246 @@ class StratumServer:
         params = msg.get("params", [])
 
         if method == "mining.subscribe":
-            # Already sent notify earlier, just acknowledge
-            resp = {"id": msg_id, "result": [[["mining.set_difficulty", "1"], ["mining.notify", getattr(self, '_subscribe_id', 'qnt-default')]], "", 8], "error": None}
+            resp = {
+                "id": msg_id,
+                "result": [
+                    [
+                        ["mining.set_difficulty", "snti-stratum-v1"],
+                        ["mining.notify", "snti-stratum-v1"],
+                    ],
+                    "00000000",  # extranonce1
+                    4,           # extranonce2 size
+                ],
+                "error": None,
+            }
             await self._send(writer, resp)
 
         elif method == "mining.authorize":
             username = params[0] if params else worker_id
-            # For simplicity, authorize anyone
             resp = {"id": msg_id, "result": True, "error": None}
             await self._send(writer, resp)
-            log.info(f"Worker authorized: {username}")
-            # Send fresh work after auth
+            log.info(f"Worker authorized: {username} (id: {worker_id})")
+            self.workers[worker_id] = {
+                "username": username,
+                "total": 0,
+                "accepted": 0,
+                "rejected": 0,
+                "last_share": None,
+                "connected_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
+            }
+            await self._send_difficulty(writer)
             await self._send_work(writer, worker_id)
 
         elif method == "mining.submit":
-            if len(params) >= 4:
+            if len(params) >= 3:
                 username = params[0]
                 job_id = params[1]
-                nonce_hex = params[2]
-                # timestamp = params[3]  # optional 4th param
+                nonce_hex = params[2] if len(params) > 2 else "00000000"
 
-                accepted = self._check_share(nonce_hex, worker_id, job_id)
+                accepted = self._check_share(nonce_hex, job_id)
+                self.total_shares += 1
 
                 if accepted:
-                    self.total_shares += 1
                     self.accepted += 1
-                    if worker_id in self.worker_shares:
-                        self.worker_shares[worker_id]["total"] += 1
-                        self.worker_shares[worker_id]["accepted"] += 1
-                        self.worker_shares[worker_id]["last_share"] = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+                    if worker_id in self.workers:
+                        self.workers[worker_id]["total"] += 1
+                        self.workers[worker_id]["accepted"] += 1
+                        self.workers[worker_id]["last_share"] = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
                     resp = {"id": msg_id, "result": True, "error": None}
-                    log.info(f"✅ Share accepted from {username} (total: {self.accepted})")
+                    log.info(f"✅ Share accepted from {username} (accepted: {self.accepted})")
                 else:
-                    self.total_shares += 1
                     self.rejected += 1
-                    if worker_id in self.worker_shares:
-                        self.worker_shares[worker_id]["total"] += 1
-                        self.worker_shares[worker_id]["rejected"] += 1
-                    resp = {"id": msg_id, "result": False, "error": [21, "Stale share", None]}
+                    if worker_id in self.workers:
+                        self.workers[worker_id]["total"] += 1
+                        self.workers[worker_id]["rejected"] += 1
+                    resp = {"id": msg_id, "result": False, "error": [21, "Invalid share", None]}
                     log.warning(f"❌ Share rejected from {username}")
 
                 await self._send(writer, resp)
-
-                # Check if we should attempt block submission
-                await self._try_submit_block(writer, worker_id)
+                if accepted:
+                    await self._try_mine_block(writer, worker_id)
+            else:
+                resp = {"id": msg_id, "result": False, "error": [20, "Invalid submit params", None]}
+                await self._send(writer, resp)
 
         elif method == "mining.extranonce.subscribe":
             resp = {"id": msg_id, "result": True, "error": None}
             await self._send(writer, resp)
 
+        elif method == "mining.get_transactions":
+            resp = {"id": msg_id, "result": [], "error": None}
+            await self._send(writer, resp)
+
         else:
             if msg_id is not None:
-                resp = {"id": msg_id, "result": None, "error": [20, "Unknown method", None]}
+                resp = {"id": msg_id, "result": None, "error": [20, f"Unknown method: {method}", None]}
                 await self._send(writer, resp)
 
-    async def _send_work(self, writer, worker_id):
-        template = await self.get_current_template()
-        if not template:
-            log.warning("No template to send work")
-            return
+    async def handle_client(self, reader, writer):
+        addr = writer.get_extra_info("peername")
+        worker_id = f"{addr[0]}:{addr[1]}"
+        self.connected_workers += 1
+        log.info(f"Miner connected: {worker_id} (total: {self.connected_workers})")
 
-        job_id = "j-" + binascii.hexlify(os.urandom(4)).decode()
-        prev_hash = template.get("previousblockhash", "0" * 64)
-        coinbase = "01000000"  # placeholder
-
-        version = template.get("version", 0x20000000)
-        bits = template.get("bits", 0x207fffff)
-        if isinstance(bits, str):
-            bits = int(bits, 16)
-        curtime = template.get("curtime", int(time.time()))
-        if isinstance(curtime, str):
-            curtime = int(curtime, 16)
-
-        notify_msg = {
-            "id": None,
-            "method": "mining.notify",
-            "params": [
-                job_id,
-                prev_hash,
-                coinbase,
-                coinbase,
-                [],  # merkle branches
-                "{:08x}".format(version),
-                "{:08x}".format(bits),
-                "{:08x}".format(curtime),
-                True,  # clean jobs
-            ],
-        }
-
-        await self._send(writer, notify_msg)
-
-    def _check_share(self, nonce_hex, worker_id, job_id):
-        """Simple share check - verify nonce produces valid PoW."""
         try:
-            nonce = int(nonce_hex, 16)
-        except (ValueError, TypeError):
-            return False
+            while True:
+                line = await asyncio.wait_for(reader.readline(), timeout=300)
+                if not line:
+                    break
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    msg = json.loads(line)
+                    await self._handle_message(msg, writer, worker_id)
+                except json.JSONDecodeError:
+                    log.warning(f"Invalid JSON from {worker_id}: {line[:100]}")
+        except asyncio.TimeoutError:
+            log.info(f"Worker timeout: {worker_id}")
+        except Exception as e:
+            log.debug(f"Worker disconnected: {worker_id} ({e})")
+        finally:
+            self.connected_workers -= 1
+            self.workers.pop(worker_id, None)
+            log.info(f"Miner disconnected: {worker_id} (remaining: {self.connected_workers})")
+            try:
+                writer.close()
+                await writer.wait_closed()
+            except Exception:
+                pass
 
-        # For regtest with very low difficulty, most shares are valid
-        # Check hash meets target
-        blob = struct.pack("<I", nonce)
-        h = hashlib.sha256(hashlib.sha256(blob).digest()).digest()
-        hash_int = int.from_bytes(h, "little")
-        target = DIFFICULTY_SHARE_TARGET
-
-        if hash_int <= target:
-            return True
-        return False
-
-    async def _try_submit_block(self, writer, worker_id):
-        """Try to submit a block when shares reach threshold."""
-        # For regtest, try generate after every N shares
-        if self.accepted > 0 and self.accepted % 10 == 0:
-            address = self.miner_address or self.rpc.get_new_address()
-            if address:
-                log.info(f"⛏ Triggering block generation to {address} (shares: {self.accepted})")
-                loop = asyncio.get_event_loop()
-                hashes = await loop.run_in_executor(
-                    None, lambda: self.rpc.generate_to_address(1, address)
-                )
-                if hashes:
-                    self.blocks_found += 1
-                    log.info(f"✅ Block found! Hashes: {hashes}")
-
-                    # Notify all miners of new work
-                    await self._send_work(writer, worker_id)
-
-    @staticmethod
-    async def _send(writer, msg):
-        data = json.dumps(msg) + "\n"
-        writer.write(data.encode())
-        await writer.drain()
-
-    # ----- server lifecycle -----
-    async def start(self):
-        server = await asyncio.start_server(self.handle_client, "0.0.0.0", self.port)
-        addrs = ", ".join(str(s.getsockname()) for s in server.sockets)
-        log.info(f"QNT Stratum server listening on {addrs}")
-
-        # Start tasks
-        tasks = [asyncio.create_task(self.update_template())]
-
-        # Start stats reporter
-        tasks.append(asyncio.create_task(self._stats_reporter()))
-
-        # Start HTTP stats endpoint
-        tasks.append(asyncio.create_task(self._http_stats()))
-
-        async with server:
-            await server.serve_forever()
+    def get_stats(self):
+        uptime = int(time.time() - self.start_time)
+        return {
+            "uptime_seconds": uptime,
+            "connected_workers": self.connected_workers,
+            "total_shares": self.total_shares,
+            "accepted": self.accepted,
+            "rejected": self.rejected,
+            "blocks_found": self.blocks_found,
+            "shares_per_block": self.shares_per_block,
+            "pool_address": self.pool_address,
+            "workers": self.workers,
+        }
 
     async def _stats_reporter(self):
         while self.active:
             await asyncio.sleep(STATS_INTERVAL)
-            s = self.get_stats()
+            info = self.rpc.get_mining_info()
+            blocks = info.get("blocks", "?") if info else "?"
             log.info(
-                f"STATS | Workers: {s['workers']} | Shares: {s['total_shares']} "
-                f"(✅{s['accepted']} ❌{s['rejected']}) | Blocks: {s['blocks_found']} "
-                f"| Uptime: {s['uptime_human']}"
+                f"📊 Stats — workers: {self.connected_workers} | "
+                f"shares: {self.accepted}/{self.total_shares} | "
+                f"blocks found: {self.blocks_found} | "
+                f"chain height: {blocks}"
             )
 
     async def _http_stats(self):
-        """Simple HTTP stats endpoint on port+1."""
+        """Simple HTTP stats endpoint on port stratum+1."""
+        stats_port = self.port + 1
 
         async def handler(reader, writer):
-            stats = json.dumps(self.get_stats(), indent=2)
-            body = (
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: application/json\r\n"
-                f"Content-Length: {len(stats)}\r\n"
-                "Connection: close\r\n\r\n"
-                f"{stats}"
-            )
-            writer.write(body.encode())
-            await writer.drain()
-            writer.close()
+            try:
+                await reader.read(1024)
+                stats = self.get_stats()
+                body = json.dumps(stats, indent=2)
+                response = (
+                    f"HTTP/1.1 200 OK\r\n"
+                    f"Content-Type: application/json\r\n"
+                    f"Access-Control-Allow-Origin: *\r\n"
+                    f"Content-Length: {len(body)}\r\n"
+                    f"\r\n"
+                    f"{body}"
+                )
+                writer.write(response.encode())
+                await writer.drain()
+            except Exception:
+                pass
+            finally:
+                try:
+                    writer.close()
+                except Exception:
+                    pass
 
-        stats_port = self.port + 1
         server = await asyncio.start_server(handler, "0.0.0.0", stats_port)
-        log.info(f"HTTP stats endpoint on port {stats_port}")
+        log.info(f"📈 Stats HTTP endpoint: http://0.0.0.0:{stats_port}/")
+        async with server:
+            await server.serve_forever()
+
+    async def start(self):
+        # Setup pool wallet & address
+        if not self.pool_address:
+            log.info("Setting up pool wallet...")
+            self.rpc.create_wallet("snti_pool")
+            self.pool_address = self.rpc.get_new_address("snti_pool")
+            if self.pool_address:
+                log.info(f"Pool address: {self.pool_address}")
+            else:
+                log.warning("Could not get pool address — will retry on first share")
+
+        # Initial template fetch
+        template = self.rpc.get_block_template()
+        if template:
+            job, _ = self._make_job_from_template(template, clean=True)
+            self.current_job = job
+            self.last_block_height = template.get("height", 0)
+            log.info(f"Initial block template: height={self.last_block_height}")
+        else:
+            log.warning("Could not fetch initial block template — node might not be ready")
+
+        # Start background tasks
+        asyncio.create_task(self.update_template())
+        asyncio.create_task(self._stats_reporter())
+        asyncio.create_task(self._http_stats())
+
+        # Start stratum server
+        server = await asyncio.start_server(self.handle_client, "0.0.0.0", self.port)
+        log.info(f"🚀 Assentian-PQE Stratum Server started on port {self.port}")
+        log.info(f"   Connect miners to: stratum+tcp://YOUR_IP:{self.port}")
+        log.info(f"   Network: testnet | RPC: {self.rpc.url}")
+        log.info(f"   Wave 1: CPU mining | Shares per block: {self.shares_per_block}")
+
         async with server:
             await server.serve_forever()
 
 
 # ---------------------------------------------------------------------------
-# Main
+# Entry point
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="QNT Stratum Mining Proxy")
-    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help=f"Stratum port (default: {DEFAULT_PORT})")
+    parser = argparse.ArgumentParser(description="Assentian-PQE Stratum Mining Server")
+    parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Stratum port")
     parser.add_argument("--rpc-host", default=DEFAULT_RPC_HOST, help="bitcoind RPC host")
-    parser.add_argument("--rpc-port", type=int, default=DEFAULT_RPC_PORT, help=f"bitcoind RPC port (default: {DEFAULT_RPC_PORT})")
-    parser.add_argument("--rpc-user", default=DEFAULT_RPC_USER, help="bitcoind RPC user")
-    parser.add_argument("--rpc-pass", default=DEFAULT_RPC_PASS, help="bitcoind RPC password")
-    parser.add_argument("--miner-address", default="", help="Mining reward address (auto-generated if empty)")
+    parser.add_argument("--rpc-port", type=int, default=DEFAULT_RPC_PORT, help="bitcoind RPC port")
+    parser.add_argument("--rpc-user", default=DEFAULT_RPC_USER, help="RPC username")
+    parser.add_argument("--rpc-pass", default=DEFAULT_RPC_PASS, help="RPC password")
+    parser.add_argument("--address", default=DEFAULT_MINER_ADDRESS, help="Pool reward address")
+    parser.add_argument("--shares-per-block", type=int, default=DEFAULT_SHARES_PER_BLOCK,
+                        help="Shares required before mining attempt")
     args = parser.parse_args()
 
-    log.info("=" * 60)
-    log.info("  SNTI Stratum Mining Proxy")
-    log.info("  Post-Quantum Blockchain - Multi-Miner Support")
-    log.info("=" * 60)
-
-    # Connect to bitcoind
     rpc = BitcoinRPC(args.rpc_host, args.rpc_port, args.rpc_user, args.rpc_pass)
 
-    try:
-        info = rpc.get_blockchain_info()
-        log.info(f"Connected to bitcoind: chain={info.get('chain','?')}, blocks={info.get('blocks','?')}")
-    except Exception as e:
-        log.error(f"Cannot connect to bitcoind: {e}")
+    # Test RPC connection
+    info = rpc.get_blockchain_info()
+    if not info:
+        log.error(f"Cannot connect to bitcoind at {rpc.url}")
+        log.error("Make sure assentian-node.service is running")
         sys.exit(1)
 
-    # Get mining address
-    miner_address = args.miner_address
-    if not miner_address:
-        miner_address = rpc.get_new_address()
-        log.info(f"Generated mining address: {miner_address}")
+    log.info(f"Connected to bitcoind: chain={info.get('chain')} blocks={info.get('blocks')}")
 
-    log.info(f"Stratum port: {args.port}")
-    log.info(f"Mining address: {miner_address}")
-    log.info(f"Share difficulty: {DIFFICULTY_SHARE_TARGET:#x}")
-
-    server = StratumServer(rpc, args.port, miner_address)
+    server = StratumServer(
+        rpc=rpc,
+        port=args.port,
+        pool_address=args.address or None,
+        shares_per_block=args.shares_per_block,
+    )
 
     try:
         asyncio.run(server.start())
     except KeyboardInterrupt:
-        log.info("Shutting down stratum server...")
-        server.active = False
+        log.info("Stratum server stopped.")
 
 
 if __name__ == "__main__":
