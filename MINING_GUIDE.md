@@ -244,3 +244,36 @@ make -j1
 
 *Assentian-PQE (SNTI) — Post Quantum Era Begins*
 *Copyright © 2026 Asep Mulya | assentianpqe@gmail.com*
+
+---
+
+## 7. Stratum Mining (CPU Pool)
+
+Selain `generatetoaddress`, kamu bisa connect ke stratum server resmi:
+Host: 104.234.26.7
+Port: 3333
+Protocol: stratum+tcp
+### Connect dengan cpuminer-opt
+
+```bash
+# Install cpuminer-opt
+sudo apt install -y cpuminer-multi
+
+# Connect ke stratum Assentian-PQE
+minerd -a sha256d \
+  -o stratum+tcp://104.234.26.7:3333 \
+  -u YOUR_SNTI_ADDRESS \
+  -p x
+```
+
+### Cek Stats Pool
+
+```bash
+curl http://104.234.26.7:3334/
+```
+
+### Catatan Wave 1 (CPU Stratum)
+
+- Reward mining masuk ke **pool address** (bukan address kamu langsung)
+- Sistem reward ke individual miner (payout) masih dalam pengembangan
+- Wave 2 (GPU) akan implementasi `submitblock` proper dengan reward langsung ke miner
