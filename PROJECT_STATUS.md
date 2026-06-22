@@ -112,7 +112,10 @@ coinbase). Tip hash node 1 dan node 2 identik persis. Ini penutup
 investigasi multi-node yang dimulai gap #4 lalu berkembang jadi
 penemuan bug konsensus nyata.
 
-## 2. TERVERIFIKASI LANGSUNG hari ini (bukti konkret, bukan klaim file lama)
+## 2. TERVERIFIKASI LANGSUNG hari ini
+- ✅ **[21 Jun]** `exportxmsskey`/`importxmsskey` — bug fixed & round-trip verified
+- ✅ **[21 Jun]** Wallet backup/restore dengan XMSS state — verified end-to-end
+ (bukti konkret, bukan klaim file lama)
 
 - ✅ `OP_XMSS_CHECKSIG` benar-benar verifikasi matematis di consensus layer (`interpreter.cpp`, bukan stub)
 - ✅ State save/load XMSS (`SaveState`/`LoadState`) tahan restart bersih DAN `kill -9` mendadak
