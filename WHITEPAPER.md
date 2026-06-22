@@ -1,4 +1,4 @@
-# QNT — The First Mineable Post-Quantum Cryptocurrency
+# Assentian-PQE (SNTI) — The First Mineable Post-Quantum Cryptocurrency
 
 ## Whitepaper v0.2 | June 2026
 
@@ -10,30 +10,30 @@
 2. [The Quantum Threat](#2-the-quantum-threat)
 3. [Why XMSS](#3-why-xmss)
 4. [Competitive Landscape](#4-competitive-landscape)
-5. [QNT Architecture](#5-qnt-architecture)
+5. [Assentian-PQE Architecture](#5-assentian-pqe-architecture)
 6. [Mining & Consensus](#6-mining--consensus)
 7. [Tokenomics](#7-tokenomics)
 8. [Roadmap](#8-roadmap)
 9. [Technical Specifications](#9-technical-specifications)
 10. [Risks & Mitigations](#10-risks--mitigations)
-11. [Survival Analysis: Will QNT Exist in 2030?](#11-survival-analysis-will-qnt-exist-in-2030)
+11. [Survival Analysis: Will SNTI Exist in 2030?](#11-survival-analysis-will-assentian-pqe-exist-in-2030)
 12. [Conclusion](#12-conclusion)
 
 ---
 
 ## 1. Executive Summary
 
-QNT is the first cryptocurrency that replaces proof-of-work with **useful post-quantum cryptographic operations**. Instead of burning electricity on arbitrary hash puzzles, QNT miners perform **XMSS (eXtended Merkle Signature Scheme) key generation and signing** — the same operations that will secure the internet against quantum computers.
+Assentian-PQE (SNTI) is the first cryptocurrency that replaces proof-of-work with **useful post-quantum cryptographic operations**. Instead of burning electricity on arbitrary hash puzzles, SNTI miners perform **XMSS (eXtended Merkle Signature Scheme) key generation and signing** — the same operations that will secure the internet against quantum computers.
 
 **One coin. One purpose. Future-proof security.**
 
 | Property | Detail |
 |---|---|
-| **Ticker** | QNT |
+| **Ticker** | SNTI |
 | **Consensus** | Proof-of-Useful-Work (PoUW) via XMSS |
 | **Signature Scheme** | XMSS-SHA2_10_256 (NIST SP 800-208) |
 | **Block Time** | ~60 seconds |
-| **Max Supply** | 21,000,000 QNT |
+| **Max Supply** | 21,000,000 SNTI |
 | **Halving** | Every 210,000 blocks (~4 years) |
 | **Language** | C (Bitcoin Core fork) |
 | **License** | BSL-1.1 (→ GPL-2.0 on 2030) |
@@ -60,7 +60,7 @@ If no action is taken:
 
 ### 2.3 The Solution
 
-QNT is built from the ground up with **quantum-resistant signatures**. No migration needed. No hard fork to survive the quantum era. **QNT is already quantum-safe.**
+Assentian-PQE (SNTI) is built from the ground up with **quantum-resistant signatures**. No migration needed. No hard fork to survive the quantum era. **Assentian-PQE (SNTI) is already quantum-safe.**
 
 ---
 
@@ -77,7 +77,7 @@ XMSS (eXtended Merkle Signature Scheme) is a **stateful hash-based signature sch
 
 ### 3.2 Why XMSS over Other PQC Schemes
 
-| Scheme | Quantum-Safe | Standardized | Stateful | Key Size | Sig Size | QNT Choice |
+| Scheme | Quantum-Safe | Standardized | Stateful | Key Size | Sig Size | SNTI Choice |
 |---|---|---|---|---|---|---|
 | **XMSS** | Yes | NIST SP 800-208 | Yes | 64 B | 2,500 B | **Selected** |
 | SPHINCS+ | Yes | NIST FIPS 205 | No | 32 B | 8,000 B | Too large |
@@ -93,17 +93,17 @@ XMSS (eXtended Merkle Signature Scheme) is a **stateful hash-based signature sch
 
 ### 3.3 The Innovation: Mining = Useful Work
 
-Traditional mining burns energy on **useless** SHA-256 puzzles. QNT mining produces **useful** XMSS cryptographic material:
+Traditional mining burns energy on **useless** SHA-256 puzzles. SNTI mining produces **useful** XMSS cryptographic material:
 
 ```
 Traditional Mining:
   Energy → Heat + CO2 + Useless hashes
 
-QNT Mining:
+Assentian-PQE (SNTI) Mining:
   Energy → XMSS Keys → Quantum-Safe Signatures → Network Security
 ```
 
-Every QNT mined **actively contributes** to the post-quantum security infrastructure.
+Every SNTI mined **actively contributes** to the post-quantum security infrastructure.
 
 ---
 
@@ -111,7 +111,7 @@ Every QNT mined **actively contributes** to the post-quantum security infrastruc
 
 ### 4.1 Existing Post-Quantum Projects
 
-QNT is not the first project to explore post-quantum cryptography in blockchain. We acknowledge and respect the work that came before us. Here is an honest comparison:
+Assentian-PQE (SNTI) is not the first project to explore post-quantum cryptography in blockchain. We acknowledge and respect the work that came before us. Here is an honest comparison:
 
 #### QRL (Quantum Resistant Ledger)
 
@@ -130,12 +130,12 @@ QNT is not the first project to explore post-quantum cryptography in blockchain.
 - Proved XMSS works in production blockchain context
 - Active development since 2018
 
-**Where QNT differs:**
+**Where SNTI differs:**
 - QRL uses PoS — no mining, no useful work
 - QRL is a single-purpose chain (payments only)
-- QNT is Bitcoin Core fork — inherits 15+ years of battle-tested code
-- QNT introduces Proof-of-Useful-Work (PoUW)
-- QNT targets full ecosystem (DeFi, L2, governance)
+- SNTI is Bitcoin Core fork — inherits 15+ years of battle-tested code
+- SNTI introduces Proof-of-Useful-Work (PoUW)
+- SNTI targets full ecosystem (DeFi, L2, governance)
 
 #### IOTA
 
@@ -147,11 +147,11 @@ QNT is not the first project to explore post-quantum cryptography in blockchain.
 | **Mining** | Not mineable |
 | **Use Case** | IoT micropayments |
 
-**Where QNT differs:**
+**Where SNTI differs:**
 - IOTA uses DAG, not blockchain — different security model
 - IOTA's W-OTS is simpler but less flexible than XMSS
 - IOTA has no mining mechanism
-- QNT uses standardized XMSS (NIST SP 800-208)
+- SNTI uses standardized XMSS (NIST SP 800-208)
 
 #### Other PQC Research Projects
 
@@ -162,14 +162,14 @@ Several academic projects have proposed PQC-based blockchains:
 
 None of these have launched a working mainnet with mining.
 
-### 4.2 QNT's Unique Position
+### 4.2 SNTI's Unique Position
 
 ```
                     QUANTUM-RESISTANT BLOCKCHAIN SPECTRUM
                     
     Research ◄──────────────────────────────────────────► Production
     
-    MatRiCT+    SPHINCS+    Dilithium-    IOTA        QRL         QNT
+    MatRiCT+    SPHINCS+    Dilithium-    IOTA        QRL         SNTI
     (paper)     (theory)    Ethereum      (DAG,       (PoS,       (PoUW,
                             (EIP)         W-OTS)      XMSS)       mineable,
                                                                 Bitcoin Core)
@@ -180,7 +180,7 @@ None of these have launched a working mainnet with mining.
 
 ### 4.3 Honest Comparison Table
 
-| Feature | Bitcoin | Ethereum | QRL | IOTA | QNT |
+| Feature | Bitcoin | Ethereum | QRL | IOTA | SNTI |
 |---|---|---|---|---|---|
 | **Quantum-safe** | ❌ ECDSA | ❌ ECDSA | ✅ XMSS | ⚠️ W-OTS | ✅ XMSS |
 | **Mineable** | ✅ PoW | ✅ PoS | ❌ PoS | ❌ DAG | ✅ PoUW |
@@ -192,40 +192,40 @@ None of these have launched a working mainnet with mining.
 | **Governance** | ✅ BIPs | ✅ EIPs | ❌ | ❌ | ✅ Planned |
 | **Fair launch** | ✅ | ✅ | ✅ | ⚠️ Coordinator | ✅ No pre-mine |
 
-### 4.4 What QNT Brings That's New
+### 4.4 What SNTI Brings That's New
 
 **1. Proof-of-Useful-Work (PoUW)**
-No other project uses XMSS key generation as consensus work. QNT mining produces real cryptographic material — XMSS key pairs that secure the network.
+No other project uses XMSS key generation as consensus work. SNTI mining produces real cryptographic material — XMSS key pairs that secure the network.
 
 **2. Bitcoin Core Fork with XMSS**
-QNT inherits Bitcoin's 15+ years of security hardening, UTXO model, SegWit, and battle-tested codebase — with XMSS replacing ECDSA at the cryptographic layer.
+Assentian-PQE (SNTI) inherits Bitcoin's 15+ years of security hardening, UTXO model, SegWit, and battle-tested codebase — with XMSS replacing ECDSA at the cryptographic layer.
 
 **3. Mineable + Quantum-Resistant**
-QRL proved XMSS works in blockchain but chose PoS. QNT proves you can have BOTH mining AND quantum resistance.
+QRL proved XMSS works in blockchain but chose PoS. SNTI proves you can have BOTH mining AND quantum resistance.
 
 **4. Full Ecosystem Vision**
-QNT is not just "quantum Bitcoin." The roadmap includes DeFi, atomic swaps, payment channels, and governance — a complete post-quantum financial infrastructure.
+Assentian-PQE (SNTI) is not just "quantum Bitcoin." The roadmap includes DeFi, atomic swaps, payment channels, and governance — a complete post-quantum financial infrastructure.
 
 ### 4.5 Acknowledgments
 
-QNT builds on the work of:
+Assentian-PQE (SNTI) builds on the work of:
 - **QRL team** — proved XMSS in blockchain (2018)
 - **Bitcoin Core developers** — the foundation we fork from
 - **NIST PQC team** — XMSS standardization (SP 800-208)
 - **Hülsing & Rijneveld** — XMSS reference implementation
 - **The broader PQC research community** — 15+ years of cryptanalysis
 
-We stand on the shoulders of giants. QNT's contribution is combining these pieces into the first mineable, full-stack, post-quantum cryptocurrency.
+We stand on the shoulders of giants. SNTI's contribution is combining these pieces into the first mineable, full-stack, post-quantum cryptocurrency.
 
 ---
 
-## 5. QNT Architecture
+## 5. SNTI Architecture
 
 ### 5.1 System Overview
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    QNT NETWORK                          │
+│                    SNTI NETWORK                          │
 │                                                         │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐          │
 │  │  Miner   │───▶│  Block   │───▶│  Node    │          │
@@ -235,7 +235,7 @@ We stand on the shoulders of giants. QNT's contribution is combining these piece
 │       ▼                               ▼                 │
 │  ┌──────────┐                  ┌──────────┐            │
 │  │ XMSS Key │                  │  Wallet  │            │
-│  │ Gen + Sig│                  │ (QNT App)│            │
+│  │ Gen + Sig│                  │ (SNTI App)│            │
 │  └──────────┘                  └──────────┘            │
 │                                                         │
 │  ┌──────────────────────────────────────────────┐      │
@@ -249,7 +249,7 @@ We stand on the shoulders of giants. QNT's contribution is combining these piece
 
 ```
 ┌─────────────────────────────────────┐
-│           QNT Block                  │
+│           SNTI Block                  │
 ├─────────────────────────────────────┤
 │  Block Header                        │
 │  ├── Version (4 bytes)              │
@@ -276,7 +276,7 @@ We stand on the shoulders of giants. QNT's contribution is combining these piece
 
 ### 5.3 Address Format
 
-QNT addresses encode an **XMSS public key hash**, making them inherently quantum-resistant:
+Assentian-PQE (SNTI) addresses encode an **XMSS public key hash**, making them inherently quantum-resistant:
 
 ```
 Address: qnt1q7s2k9m3x8v5n2p4r6t8w1y3z5a7b9c2d4e6f8g0h
@@ -293,13 +293,13 @@ Breakdown:
 
 ### 6.1 Proof-of-Useful-Work (PoUW)
 
-QNT replaces hash-based difficulty with **XMSS computational difficulty**:
+Assentian-PQE (SNTI) replaces hash-based difficulty with **XMSS computational difficulty**:
 
 ```
 Traditional PoW:
   Find nonce such that SHA256(block || nonce) < target
 
-QNT PoUW:
+Assentian-PQE (SNTI) PoUW:
   1. Generate XMSS key pair (one-time, per miner)
   2. Sign block header with XMSS private key
   3. Submit block + signature + public key
@@ -312,7 +312,7 @@ QNT PoUW:
 ```python
 def mine_block(miner_xmss_key, block_template, difficulty):
     """
-    QNT Proof-of-Useful-Work mining loop.
+    SNTI Proof-of-Useful-Work mining loop.
     """
     while True:
         # Update nonce in block header
@@ -350,13 +350,13 @@ def mine_block(miner_xmss_key, block_template, difficulty):
 
 ```
 Block Reward Schedule:
-  Genesis ──────── 50 QNT/block ────────┐
-  210k blocks ─── 25 QNT/block ────────┤ Halving 1
-  420k blocks ─── 12.5 QNT/block ──────┤ Halving 2
-  630k blocks ─── 6.25 QNT/block ──────┤ Halving 3
+  Genesis ──────── 50 SNTI/block ────────┐
+  210k blocks ─── 25 SNTI/block ────────┤ Halving 1
+  420k blocks ─── 12.5 SNTI/block ──────┤ Halving 2
+  630k blocks ─── 6.25 SNTI/block ──────┤ Halving 3
   ...continues until 21M total supply──┘
 
-Total Supply: 21,000,000 QNT (capped)
+Total Supply: 21,000,000 SNTI (capped)
 ```
 
 ---
@@ -366,7 +366,7 @@ Total Supply: 21,000,000 QNT (capped)
 ### 7.1 Supply Distribution
 
 ```
-Total Supply: 21,000,000 QNT
+Total Supply: 21,000,000 SNTI
 
 Distribution:
   ┌────────────────────────────────────────────┐
@@ -379,20 +379,20 @@ Distribution:
 
 ### 7.2 Emission Schedule
 
-| Phase | Blocks | Reward | Daily QNT | Period |
+| Phase | Blocks | Reward | Daily SNTI | Period |
 |---|---|---|---|---|
-| Genesis | 0–210,000 | 50 QNT | ~720 | Year 1–4 |
-| Halving 1 | 210,000–420,000 | 25 QNT | ~360 | Year 4–8 |
-| Halving 2 | 420,000–630,000 | 12.5 QNT | ~180 | Year 8–12 |
-| Halving 3 | 630,000–840,000 | 6.25 QNT | ~90 | Year 12–16 |
+| Genesis | 0–210,000 | 50 SNTI | ~720 | Year 1–4 |
+| Halving 1 | 210,000–420,000 | 25 SNTI | ~360 | Year 4–8 |
+| Halving 2 | 420,000–630,000 | 12.5 SNTI | ~180 | Year 8–12 |
+| Halving 3 | 630,000–840,000 | 6.25 SNTI | ~90 | Year 12–16 |
 | ... | ... | ... | ... | ... |
 
 ### 7.3 Fee Market
 
 ```
 Transaction Fees:
-  Base fee:     0.001 QNT per transaction
-  Priority fee: 0.0001–0.01 QNT (market-based)
+  Base fee:     0.001 SNTI per transaction
+  Priority fee: 0.0001–0.01 SNTI (market-based)
   Fee burn:     50% burned (deflationary)
   Fee to miner: 50% to block producer
 ```
@@ -425,10 +425,10 @@ Transaction Fees:
 
 ### Phase 4: Scale (Q3–Q4 2027)
 - [ ] Layer-2 payment channels
-- [ ] Atomic swaps (QNT↔BTC)
+- [ ] Atomic swaps (SNTI↔BTC)
 - [ ] DeFi bridge
 - [ ] Governance system
-- [ ] QNT Grant Program
+- [ ] SNTI Grant Program
 
 ### Phase 5: Adoption (2028+)
 - [ ] Enterprise adoption
@@ -506,78 +506,78 @@ Double Spend: Prevented by UTXO + PoUW consensus
 |---|---|---|---|
 | Mining regulation | Medium | Medium | Useful-work narrative; green energy |
 | Exchange delisting | Low | High | Decentralized exchange support |
-| PQC mandate acceleration | Low | Positive | QNT is first-mover |
+| PQC mandate acceleration | Low | Positive | SNTI is first-mover |
 
 ---
 
-## 11. Survival Analysis: Will QNT Exist in 2030?
+## 11. Survival Analysis: Will SNTI Exist in 2030?
 
 ### 11.1 The Honest Answer
 
 **Maybe. Probably not. But the attempt matters.**
 
-This section is not here to sugarcoat. It is here to give investors, developers, and miners an honest assessment of QNT's chances of surviving until 2030. We believe in radical transparency — even when the truth is uncomfortable.
+This section is not here to sugarcoat. It is here to give investors, developers, and miners an honest assessment of SNTI's chances of surviving until 2030. We believe in radical transparency — even when the truth is uncomfortable.
 
-### 11.2 Why QNT Could Survive Until 2030
+### 11.2 Why SNTI Could Survive Until 2030
 
 **1. The Quantum Threat Is Real and Accelerating**
 
 The timeline is not speculative — it is driven by concrete milestones:
 
-| Year | Milestone | Impact on QNT |
+| Year | Milestone | Impact on SNTI |
 |---|---|---|
-| 2024 | NIST finalizes PQC standards (FIPS 203, 204, 205) | Legitimizes QNT's approach |
+| 2024 | NIST finalizes PQC standards (FIPS 203, 204, 205) | Legitimizes SNTI's approach |
 | 2025 | Major tech companies begin PQC migration | Increases awareness |
-| 2026 | QNT launches mainnet | First-mover in mineable PQC |
+| 2026 | SNTI launches mainnet | First-mover in mineable PQC |
 | 2027 | "Harvest now, decrypt later" attacks become public | Urgency increases |
 | 2028 | First cryptographically relevant quantum computer (estimated) | Demand spikes |
 | 2029 | NIST mandates PQC for federal systems | Regulatory tailwind |
-| 2030 | Mass migration to PQC begins | QNT is already there |
+| 2030 | Mass migration to PQC begins | SNTI is already there |
 
 **2. First-Mover Advantage in Mineable PQC**
 
-QNT is the first mineable post-quantum cryptocurrency. This matters because:
+Assentian-PQE (SNTI) is the first mineable post-quantum cryptocurrency. This matters because:
 - Network effects are hard to replicate once established
-- Miners who commit early become stakeholders in QNT's success
+- Miners who commit early become stakeholders in SNTI's success
 - Developer mindshare, once captured, tends to persist
 
 **3. Bitcoin Core Foundation**
 
-QNT inherits 15+ years of battle-tested code. This is not a whitepaper project — it is a working codebase. The risk of fundamental technical failure is lower than a from-scratch implementation.
+Assentian-PQE (SNTI) inherits 15+ years of battle-tested code. This is not a whitepaper project — it is a working codebase. The risk of fundamental technical failure is lower than a from-scratch implementation.
 
 **4. Useful-Work Narrative**
 
-As ESG concerns grow, "useful work" mining becomes increasingly attractive. QNT mining produces real cryptographic value — XMSS keys that secure the network. This narrative resonates with:
+As ESG concerns grow, "useful work" mining becomes increasingly attractive. SNTI mining produces real cryptographic value — XMSS keys that secure the network. This narrative resonates with:
 - Environmentally conscious investors
 - Government regulators
 - Enterprise adopters
 
-### 11.3 Why QNT Might NOT Survive Until 2030
+### 11.3 Why SNTI Might NOT Survive Until 2030
 
 **1. Big Players Could Migrate to PQC**
 
-This is the single biggest threat. If Bitcoin, Ethereum, or Solana successfully migrate to post-quantum signatures, QNT's unique selling proposition diminishes significantly.
+This is the single biggest threat. If Bitcoin, Ethereum, or Solana successfully migrate to post-quantum signatures, SNTI's unique selling proposition diminishes significantly.
 
-| Scenario | Probability | Impact on QNT |
+| Scenario | Probability | Impact on SNTI |
 |---|---|---|
 | Bitcoin adopts PQC via soft fork | 15% by 2030 | Severe — loses "quantum-safe" narrative |
 | Ethereum adopts PQC | 20% by 2030 | Moderate — DeFi moves to ETH |
 | Major L1 adopts PQC | 30% by 2030 | Moderate — competition increases |
-| No major chain adopts PQC | 35% by 2030 | Positive — QNT remains unique |
+| No major chain adopts PQC | 35% by 2030 | Positive — SNTI remains unique |
 
 **2. Window of Opportunity Is Short**
 
-QNT has an estimated **2-3 year window** (2026-2028) to establish network effect before major chains potentially migrate. If QNT fails to:
+Assentian-PQE (SNTI) has an estimated **2-3 year window** (2026-2028) to establish network effect before major chains potentially migrate. If Assentian-PQE (SNTI) fails to:
 - Launch mainnet by Q4 2026
 - Attract 10,000+ active miners by Q2 2027
 - List on Tier-2 exchanges by Q4 2027
 - Build a functioning DeFi ecosystem by 2028
 
-...then the window closes, and QNT risks becoming irrelevant.
+...then the window closes, and SNTI risks becoming irrelevant.
 
 **3. Mining Economics Must Be Competitive**
 
-If QNT mining is not profitable, miners leave. If miners leave, the network becomes vulnerable. The difficulty adjustment mechanism must balance:
+If SNTI mining is not profitable, miners leave. If miners leave, the network becomes vulnerable. The difficulty adjustment mechanism must balance:
 - Miner profitability (to attract hashrate)
 - Network security (to prevent 51% attacks)
 - Token price stability (to prevent death spirals)
@@ -587,7 +587,7 @@ If QNT mining is not profitable, miners leave. If miners leave, the network beco
 Cryptocurrency regulation is tightening globally. Specific risks include:
 - Mining bans (as seen in China, 2021)
 - PQC-specific export controls (XMSS is currently unrestricted)
-- Securities classification (if QNT is deemed a security)
+- Securities classification (if SNTI is deemed a security)
 
 **5. Technology Risk**
 
@@ -599,29 +599,29 @@ XMSS, while well-studied, could be superseded:
 ### 11.4 Survival Scenarios
 
 #### Best Case (20% probability)
-- QNT launches mainnet on time (Q4 2026)
+- SNTI launches mainnet on time (Q4 2026)
 - 50,000+ active miners by 2028
 - Listed on 10+ exchanges
 - DeFi ecosystem with $100M+ TVL
 - Major chains delay PQC migration past 2030
-- **Result: QNT becomes the de facto post-quantum cryptocurrency**
+- **Result: SNTI becomes the de facto post-quantum cryptocurrency**
 
 #### Base Case (35% probability)
-- QNT launches mainnet with delays (Q1 2027)
+- SNTI launches mainnet with delays (Q1 2027)
 - 5,000-10,000 active miners
 - Listed on 3-5 exchanges
 - Basic DeFi ecosystem
 - 1-2 major chains adopt PQC
-- **Result: QNT survives as a niche PQC chain with dedicated community**
+- **Result: SNTI survives as a niche PQC chain with dedicated community**
 
 #### Worst Case (45% probability)
 - Mainnet delayed beyond Q2 2027
 - Fewer than 1,000 active miners
 - No exchange listings
-- Major chains adopt PQC before QNT gains traction
-- **Result: QNT becomes inactive by 2029**
+- Major chains adopt PQC before SNTI gains traction
+- **Result: SNTI becomes inactive by 2029**
 
-### 11.5 What Must Happen for QNT to Survive
+### 11.5 What Must Happen for SNTI to Survive
 
 **Critical Milestones (Non-Negotiable):**
 
@@ -639,36 +639,36 @@ XMSS, while well-studied, could be superseded:
 1. **Speed of execution** — The team must ship fast. Perfection is the enemy of survival.
 2. **Community building** — Miners, developers, and investors must be cultivated from day one.
 3. **Partnerships** — PQC research institutions, universities, and enterprises provide credibility.
-4. **Exchange listings** — Liquidity is survival. Without it, QNT is worthless.
+4. **Exchange listings** — Liquidity is survival. Without it, SNTI is worthless.
 5. **Continuous development** — Stalling = death in crypto.
 
-### 11.6 The Philosophical Case for QNT
+### 11.6 The Philosophical Case for SNTI
 
-Even if QNT does not survive until 2030, the project serves a purpose:
+Even if SNTI does not survive until 2030, the project serves a purpose:
 
 **1. Proof of Concept**
-QNT proves that mineable post-quantum cryptocurrency is possible. Even if QNT fails, the code and research live on.
+Assentian-PQE (SNTI) proves that mineable post-quantum cryptocurrency is possible. Even if SNTI fails, the code and research live on.
 
 **2. Urgency Signal**
-QNT's existence signals to the broader crypto industry that quantum threat is real and action is needed now.
+Assentian-PQE's existence signals to the broader crypto industry that quantum threat is real and action is needed now.
 
 **3. Open Source Contribution**
-All QNT code is BSL-1.1 licensed (converts to GPL-2.0 on June 15, 2030). Anyone can fork, learn from, or build upon it. The knowledge persists regardless of QNT's fate.
+All SNTI code is BSL-1.1 licensed (converts to GPL-2.0 on June 15, 2030). Anyone can fork, learn from, or build upon it. The knowledge persists regardless of SNTI's fate.
 
 **4. The Attempt Matters**
-Someone has to try. If no one builds the first mineable PQC cryptocurrency, the idea dies by default. QNT is the attempt.
+Someone has to try. If no one builds the first mineable PQC cryptocurrency, the idea dies by default. SNTI is the attempt.
 
 ### 11.7 Final Assessment
 
-**QNT's survival probability until 2030: ~35%**
+**Assentian-PQE (SNTI)'s survival probability until 2030: ~35%**
 
-This is honest. Most cryptocurrencies fail. Most startups fail. The odds are against QNT.
+This is honest. Most cryptocurrencies fail. Most startups fail. The odds are against SNTI.
 
 But 35% is not 0%. And in a world where quantum computers will eventually break every ECDSA signature on every major blockchain, **someone needs to build the alternative**.
 
-That someone is QNT.
+That someone is SNTI.
 
-**The question is not "Will QNT definitely survive?" The question is "Is the attempt worth making?"**
+**The question is not "Will SNTI definitely survive?" The question is "Is the attempt worth making?"**
 
 We believe it is.
 
@@ -676,11 +676,11 @@ We believe it is.
 
 ## 12. Conclusion
 
-QNT is not just another cryptocurrency. It is **infrastructure for the post-quantum world**.
+Assentian-PQE (SNTI) is not just another cryptocurrency. It is **infrastructure for the post-quantum world**.
 
-While other projects debate migration strategies, QNT is **already there** — a fully functional, mineable, quantum-resistant blockchain from day one.
+While other projects debate migration strategies, SNTI is **already there** — a fully functional, mineable, quantum-resistant blockchain from day one.
 
-**The quantum future is not a threat to QNT. It is QNT's greatest opportunity.**
+**The quantum future is not a threat to SNTI. It is SNTI's greatest opportunity.**
 
 ---
 
