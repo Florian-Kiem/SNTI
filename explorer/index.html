@@ -331,7 +331,7 @@
     <div class="wp-page">
 
       <div class="wp-hero">
-        <h1>QNT Whitepaper</h1>
+        <h1>Assentian-PQE (SNTI) Whitepaper</h1>
         <div class="wp-sub">Quantum Resistant Network Token — The First Mineable Post-Quantum Blockchain</div>
         <div class="wp-badges">
           <span class="wp-badge">XMSS-SHA2_10_256</span>
@@ -354,7 +354,7 @@
 
       <div class="wp-section" id="wp-abstract">
         <h2><span class="num">1</span> Abstract</h2>
-        <p><strong>QNT (Quantum Resistant Network Token)</strong> is the world's first mineable blockchain secured by post-quantum cryptography. Built on a fork of Bitcoin Core v27, SNTI replaces ECDSA with <strong>XMSS (Extended Merkle Signature Scheme)</strong> — a hash-based signature scheme standardized in NIST SP 800-208 that is resistant to attacks from both classical and quantum computers.</p>
+        <p><strong>Assentian-PQE (SNTI)</strong> is the world's first mineable blockchain secured by post-quantum cryptography. Built on a fork of Bitcoin Core v27, SNTI replaces ECDSA with <strong>XMSS (Extended Merkle Signature Scheme)</strong> — a hash-based signature scheme standardized in NIST SP 800-208 that is resistant to attacks from both classical and quantum computers.</p>
         <p>Unlike existing "quantum-resistant" projects that are either non-mineable, use unproven cryptographic assumptions, or are centralized, SNTI delivers a fully decentralized, proof-of-work blockchain with mathematically proven quantum resistance — while maintaining the battle-tested architecture of Bitcoin.</p>
         <div class="wp-highlight green">
           <strong>Key Innovation:</strong> SNTI is the first blockchain to combine XMSS post-quantum signatures with SHA-256 proof-of-work mining, creating a truly quantum-resistant decentralized network that anyone can mine.
@@ -376,7 +376,7 @@
 
       <div class="wp-section" id="wp-solution">
         <h2><span class="num">3</span> Our Solution</h2>
-        <p>QNT addresses the quantum threat with a two-pronged approach:</p>
+        <p>Assentian-PQE (SNTI) addresses the quantum threat with a two-pronged approach:</p>
         <ol>
           <li><strong>XMSS Signatures (Primary):</strong> Hash-based signatures with mathematical proofs of quantum resistance. No known quantum algorithm provides any significant speedup against hash-based cryptography.</li>
           <li><strong>ECDSA (Supplementary):</strong> Maintained for backward compatibility during the transition period. Users can choose their security level.</li>
@@ -389,7 +389,7 @@
           <li><strong>No Quantum Speedup:</strong> Grover's algorithm provides at most √N speedup — easily mitigated by increasing hash output size</li>
         </ul>
         <h3>3.2 — Hybrid Architecture</h3>
-        <p>QNT uses a hybrid approach where both ECDSA and XMSS transactions coexist on the same chain. The script engine distinguishes signature types by key size:</p>
+        <p>Assentian-PQE (SNTI) uses a hybrid approach where both ECDSA and XMSS transactions coexist on the same chain. The script engine distinguishes signature types by key size:</p>
         <table>
           <tr><th>Key Size</th><th>Signature Scheme</th><th>Opcode</th><th>Quantum Resistant</th></tr>
           <tr><td>33 bytes</td><td>ECDSA (secp256k1)</td><td>OP_CHECKSIG (0xAC)</td><td>No</td></tr>
@@ -400,7 +400,7 @@
       <div class="wp-section" id="wp-architecture">
         <h2><span class="num">4</span> Technical Architecture</h2>
         <h3>4.1 — Base Layer: Bitcoin Core v27</h3>
-        <p>QNT is built on Bitcoin Core v27 — the most battle-tested blockchain codebase in existence. This provides:</p>
+        <p>Assentian-PQE (SNTI) is built on Bitcoin Core v27 — the most battle-tested blockchain codebase in existence. This provides:</p>
         <ul>
           <li>Proven UTXO model and transaction validation</li>
           <li>Mature P2P networking stack</li>
@@ -420,7 +420,7 @@
           <tr><td>Address Prefix</td><td>qnr (regtest), qnt (mainnet)</td><td></td></tr>
         </table>
         <h3>4.3 — Script Extensions</h3>
-        <p>QNT extends Bitcoin Script with a new opcode:</p>
+        <p>Assentian-PQE (SNTI) extends Bitcoin Script with a new opcode:</p>
         <pre>OP_XMSS_CHECKSIG = 0xBB</pre>
         <p>This opcode verifies a 64-byte XMSS public key against a ~2500-byte XMSS signature. The verification follows the XMSS specification in RFC 8391 / NIST SP 800-208.</p>
       </div>
@@ -454,7 +454,7 @@
           <li>Recovery mechanisms for state synchronization</li>
         </ul>
         <div class="wp-highlight orange">
-          <strong>Critical:</strong> Reusing an XMSS leaf index completely compromises security. QNT's wallet implementation prevents this through strict state management.
+          <strong>Critical:</strong> Reusing an XMSS leaf index completely compromises security. Assentian-PQE's wallet implementation prevents this through strict state management.
         </div>
       </div>
 
@@ -479,7 +479,7 @@
           <tr><th>Scheme</th><th>Quantum Resistant</th><th>Signature Size</th><th>Stateful</th><th>NIST Status</th></tr>
           <tr><td>ECDSA (Bitcoin)</td><td>No</td><td>72 B</td><td>No</td><td>FIPS 186-4</td></tr>
           <tr><td>Schnorr (Taproot)</td><td>No</td><td>64 B</td><td>No</td><td>-</td></tr>
-          <tr><td><strong>XMSS (QNT)</strong></td><td><strong>Yes</strong></td><td><strong>~2,500 B</strong></td><td><strong>Yes</strong></td><td><strong>SP 800-208</td></tr>
+          <tr><td><strong>XMSS (SNTI)</strong></td><td><strong>Yes</strong></td><td><strong>~2,500 B</strong></td><td><strong>Yes</strong></td><td><strong>SP 800-208</td></tr>
           <tr><td>CRYSTALS-Dilithium</td><td>Yes</td><td>2,420 B</td><td>No</td><td>FIPS 204</td></tr>
           <tr><td>SPHINCS+</td><td>Yes</td><td>7,856 B</td><td>No</td><td>FIPS 205</td></tr>
           <tr><td>FALCON</td><td>Yes</td><td>666 B</td><td>No</td><td>FIPS 206</td></tr>
@@ -545,7 +545,7 @@
       </div>
 
       <div class="wp-footer">
-        <p>QNT — Quantum Resistant Network Token</p>
+        <p>Assentian-PQE (SNTI) — Post-Quantum Era Begins</p>
         <p>The First Mineable Post-Quantum Blockchain</p>
         <p style="margin-top:8px;">Built on Bitcoin Core v27 • XMSS-SHA2_10_256 • SHA-256 PoW</p>
       </div>
@@ -800,7 +800,7 @@ async function showTx(txid) {
         return `<tr>
           <td>${linkTxid(vin.txid)}:${escHtml(String(vin.vout??'—'))}</td>
           <td>${vin.address ? linkAddress(vin.address) : '—'}</td>
-          <td style="text-align:right;">${vin.value !== null && vin.value !== undefined ? vin.value.toFixed(8) + ' QNT' : '—'}</td>
+          <td style="text-align:right;">${vin.value !== null && vin.value !== undefined ? vin.value.toFixed(8) + ' SNTI' : '—'}</td>
         </tr>`;
       }).join('');
     }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>QNT Network Dashboard</title>
+<title>Assentian-PQE Network Dashboard</title>
 <style>
 :root{--bg:#0a0e17;--card:#111827;--border:#2a3a55;--text:#e8edf5;--dim:#8899bb;--accent:#00d4aa;--blue:#3b82f6;--purple:#a855f7;--orange:#f59e0b;--green:#22c55e;--red:#ef4444}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -47,7 +47,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <body>
 <div class="wrap">
   <header>
-    <div class="logo">QNT <small>QUANTUM-RESISTANT BLOCKCHAIN</small></div>
+    <div class="logo">Assentian-PQE <small>QUANTUM-RESISTANT BLOCKCHAIN</small></div>
     <div class="status"><div class="dot" id="statusDot" style="background:var(--dim)"></div><span id="statusText">Connecting...</span></div>
   </header>
 
@@ -128,7 +128,7 @@ async function loadStatus() {
     document.getElementById('sHash').textContent = fmtHashps(d.networkhashps);
     document.getElementById('nVersion').textContent = d.version ?? '—';
     document.getElementById('nProto').textContent = d.protocolversion ?? '—';
-    document.getElementById('nFee').textContent = d.relayfee ? d.relayfee + ' QNT' : '—';
+    document.getElementById('nFee').textContent = d.relayfee ? d.relayfee + ' SNTI' : '—';
     document.getElementById('nWarn').textContent = d.warnings || 'None';
     // PoUW status from getmininginfo
     if (d.pouw_enabled !== undefined) {
