@@ -156,3 +156,18 @@ penemuan bug konsensus nyata.
    - **Fix buat regtest kita**: chain ini disposable test data, tinggal wipe & re-genesis biar bisa lanjut tes 2-node bersih
 4. **Encryption at rest** untuk XMSS state (MEDIUM, dari AUDIT.md, masih terbuka)
 5. Baru pertimbangkan: nyalain testnet lagi, nyalain stratum, audit eksternal beneran
+
+## STATUS LIVE [22 Jun 2026]
+
+**`assentian-node.service` LIVE dengan binary terbaru (semua fix 20-21 Jun aktif):**
+- ✅ Sighash-v2 aktif di consensus
+- ✅ Encryption at rest aktif
+- ✅ importxmsskey fix aktif
+- Genesis: `2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d`
+- Port P2P: 39333 (testnet, terbuka dari luar)
+- Port RPC: 39332 (localhost only)
+- Block count saat restart: 10 (mining verified)
+
+**Rebrand selesai**: semua file publik (HTML, MD, whitepaper) sudah bersih dari "QNT".
+LICENSE & SECURITY.md updated ke Assentian-PQE / Asep Mulya / assentianpqe@gmail.com.
+
