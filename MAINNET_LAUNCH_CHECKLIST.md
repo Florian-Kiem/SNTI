@@ -14,7 +14,7 @@
 | Key retirement / anti-reuse XMSS | ✅ Verified | One-time-use per address, diuji end-to-end |
 | Multi-node consensus agreement | ✅ Verified | Regtest + testnet, termasuk blok berisi transaksi XMSS asli |
 | Bug format blok legacy (pra-fix BIP141) | ✅ Ditemukan & diperbaiki | Hanya pengaruhi blok historis sebelum fix 17 Jun |
-| Mainnet genesis di production difficulty | ❌ Belum | Masih placeholder `0x1d00ffff`, belum pernah ditambang di difficulty asli |
+| Mainnet genesis | ✅ Done | nNonce=26, hash=00146ebb6e82..., nBits=0x207fffff, 23 Jun 2026 |
 | Difficulty retarget di bawah beban nyata | ❌ Belum diuji | Belum ada testnet jalan berhari-hari dengan banyak miner |
 | Chain reorg handling dengan blok PoUW | ❌ Belum diuji | Belum pernah dipaksa fork/reorg |
 
@@ -60,7 +60,7 @@
 |---|---|
 | Ticker "SNTI" | ❌ **BENTROK** dengan Quant Network (market cap ~$1 miliar) — harus diganti sebelum launch publik |
 | Nama/ticker final | 🔄 Dalam evaluasi — kandidat "Assentian-PQE" / SNTI relatif bersih, perlu verifikasi manual final di CoinMarketCap/CoinGecko |
-| Genesis baru dengan nama final | ❌ Belum dibuat (genesis sekarang masih pakai pesan "SNTI") |
+| Genesis baru dengan nama final | ✅ Done | "Assentian-PQE 22/Jun/2026 XMSS Post Quantum Era - For Sentia" |
 
 ## 6. Dokumentasi & Legal
 
@@ -78,6 +78,6 @@
 
 1. **Selesaikan keputusan nama/ticker final** — ini blocker buat semua yang lain (genesis, whitepaper, branding)
 2. **Restart `assentian-node.service` pakai binary terbaru** — fix hari ini (CheckPoUW, encryption) belum aktif di servis live
-3. **Mine genesis baru** dengan nama final, di difficulty yang lebih realistis
+3. ~~**Mine genesis baru**~~ ✅ Done — nNonce=26, hash=00146ebb..., 23 Jun 2026
 4. **Audit keamanan eksternal** sebelum exposure publik lebih luas
 5. Baru pertimbangkan: testnet publik resmi, stratum aktif, DNS seed, marketing/komunitas

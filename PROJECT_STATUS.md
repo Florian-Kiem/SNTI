@@ -14,6 +14,7 @@ status terkini — selalu cek file ini dulu.
 |---|---|---|
 | 15 Jun 10:09 | 7b4a88b | First commit — import Bitcoin Core fork |
 | 15 Jun 16:12 | a545e92 | Lisensi BSL-1.1 |
+| 23 Jun 2026 | 6c0e3d4 | **Mainnet genesis FINAL** nNonce=26, hash=00146ebb6e8240633c4aef06ca3afbc6c26047f9c3ae5ce1548332a8de149263, nBits=0x207fffff, msg="Assentian-PQE 22/Jun/2026 XMSS Post Quantum Era - For Sentia" |
 | 16 Jun 00:29 | cff5dd5 | **Genesis block resmi ditambang** (NIST SP 800-208 XMSS) |
 | 16 Jun 06:16 | 700f683 | RPC export/import xmsskey |
 | 16 Jun 07:56 | 91355f5 | Keputusan SADAR: tunda proteksi reuse key XMSS demi alasan lain dulu |
@@ -163,7 +164,8 @@ penemuan bug konsensus nyata.
 - ✅ Sighash-v2 aktif di consensus
 - ✅ Encryption at rest aktif
 - ✅ importxmsskey fix aktif
-- Genesis: `2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d`
+- Genesis testnet: `2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d`
+- Genesis mainnet: `00146ebb6e8240633c4aef06ca3afbc6c26047f9c3ae5ce1548332a8de149263`
 - Port P2P: 39333 (testnet, terbuka dari luar)
 - Port RPC: 39332 (localhost only)
 - Block count saat restart: 10 (mining verified)
