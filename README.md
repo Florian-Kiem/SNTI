@@ -26,7 +26,7 @@ QNT is a Bitcoin Core v27 fork with XMSS-SHA2_10_256 post-quantum signature sche
 
 ```
 bash
-git clone https://github.com/asepganzu-svg/assentian-pqe.git
+git clone https://github.com/Florian-Kiem/assentian-pqe.git
 # struktur sudah rata, tidak perlu cd ke subfolder
 
 ```
