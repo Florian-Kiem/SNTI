@@ -143,9 +143,21 @@ class BitcoinRPC:
     def get_block_count(self):
         return self.call("getblockcount")
 
-    def generate_to_address(self, n_blocks, address):
+    def generate_to_address(self, n_blocks, address, wallet="snti_testnet"):
         """Mine n_blocks to address. This triggers full PoUW (XMSS) internally."""
-        return self.call("generatetoaddress", [n_blocks, address])
+        # Wave 2: must use wallet URL for generatetoaddress
+        self.id += 1
+        payload = {"jsonrpc": "1.0", "id": self.id, "method": "generatetoaddress", "params": [n_blocks, address]}
+        try:
+            resp = requests.post(f"{self.url}/wallet/{wallet}", json=payload, auth=self.auth, timeout=60)
+            data = resp.json()
+            if data.get("error"):
+                log.error(f"generatetoaddress error: {data['error']}")
+                return None
+            return data.get("result")
+        except Exception as e:
+            log.error(f"generatetoaddress failed: {e}")
+            return None
 
     def create_wallet(self, name):
         """Create wallet, ignore error if already exists."""
@@ -293,11 +305,13 @@ class StratumServer:
         Wave 2 will implement proper getwork/submitblock flow.
         """
         if self.accepted > 0 and self.accepted % self.shares_per_block == 0:
-            address = self.pool_address
+            # Wave 2: reward goes directly to miner address
+            worker = self.workers.get(worker_id, {})
+            address = worker.get("miner_address") or self.pool_address
             if not address:
                 address = self.rpc.get_new_address()
             if not address:
-                log.error("No pool address available for mining")
+                log.error("No address available for mining")
                 return
 
             log.info(f"⛏ Mining attempt triggered (shares: {self.accepted}) → {address}")
@@ -373,14 +387,21 @@ class StratumServer:
             resp = {"id": msg_id, "result": True, "error": None}
             await self._send(writer, resp)
             log.info(f"Worker authorized: {username} (id: {worker_id})")
+            # Wave 2: username IS the miner's SNTI address
+            miner_address = username if username.startswith("tq1") or username.startswith("q1") or len(username) > 20 else None
             self.workers[worker_id] = {
                 "username": username,
+                "miner_address": miner_address,
                 "total": 0,
                 "accepted": 0,
                 "rejected": 0,
                 "last_share": None,
                 "connected_at": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             }
+            if miner_address:
+                log.info(f"Wave 2: miner address set to {miner_address}")
+            else:
+                log.warning(f"Wave 2: username '{username}' is not a valid SNTI address — reward will go to pool address")
             await self._send_difficulty(writer)
             await self._send_work(writer, worker_id)
 
