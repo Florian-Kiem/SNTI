@@ -236,7 +236,7 @@ public:
         m_assumed_chain_state_size = 2;
 
         genesis = CreateGenesisBlock(1782026818, 1, 0x207fffff, 1, 50 * COIN);
-        consensus.hashGenesisBlock = uint256S("216e5f693110b9c347530c749c8277692afb2954da83d5c806ae676a11d4ec07");
+        consensus.hashGenesisBlock = uint256S("2d858f51fc4af7926bee59c82d06d58a3f260647145aaf6f89263bcb3643b66d");
 
         vFixedSeeds.clear();
         vSeeds.clear();
