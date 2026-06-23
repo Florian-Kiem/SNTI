@@ -1,4 +1,4 @@
-# SNTI — Quantum Resistant Blockchain
+# Secure Network for Tamperproof Immutability (SNTI) — Quantum Resistant Blockchain
 
 > **The world's first mineable post-quantum cryptocurrency.**
 > ⚠️ Nama/ticker "SNTI" sedang dalam evaluasi ulang (bentrok dengan Quant Network yang sudah ada) — lihat [`PROJECT_STATUS.md`](PROJECT_STATUS.md) untuk status terkini.
